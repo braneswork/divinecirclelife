@@ -1,0 +1,16 @@
+{
+  "name": "Divine Circle · Manager",
+  "short_name": "Divine Circle",
+  "description": "Gestión de reservas, tablas e instructores para Take Off Surf School",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#33082F",
+  "theme_color": "#33082F",
+  "orientation": "any",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

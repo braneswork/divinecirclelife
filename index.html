@@ -91,12 +91,23 @@ h1,h2,h3,h4{margin:0}
 .shell{display:flex;min-height:100%;flex-direction:column}
 .sidebar{
   position:fixed;left:0;right:0;bottom:0;z-index:40;
-  display:flex;align-items:stretch;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
+  display:flex;flex-direction:column;
   background:color-mix(in srgb, var(--card) 82%, transparent);backdrop-filter:blur(16px);
   border-top:1px solid var(--line);
   padding-bottom:env(safe-area-inset-bottom);
 }
-.sidebar::-webkit-scrollbar{display:none}
+.navmain{display:flex;align-items:stretch;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.navmain::-webkit-scrollbar{display:none}
+.navsub{display:none;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;gap:6px;padding:0 10px 8px;border-top:1px solid var(--line)}
+.navsub.show{display:flex}
+.navsub::-webkit-scrollbar{display:none}
+.subbtn{
+  flex:0 0 auto;border:1px solid var(--line);background:none;border-radius:999px;cursor:pointer;
+  padding:5px 13px;margin-top:8px;
+  font-family:'Montserrat',sans-serif;font-weight:600;font-size:10.5px;letter-spacing:.03em;
+  text-transform:uppercase;color:var(--muted);
+}
+.subbtn.on{color:var(--gold);border-color:var(--gold)}
 .brand{display:none}
 .navgroup{display:none}
 .navsep{flex:0 0 auto;width:1px;align-self:stretch;margin:10px 3px;background:var(--line)}
@@ -788,28 +799,44 @@ const areaOf = c => Object.keys(AREAS).find(k=>AREAS[k].cats.includes(c)) || 've
 
 const NAV = [
   {id:'hoy',      label:'Hoy',    icon:'<circle cx="12" cy="12" r="4.3"/><path d="M12 3.4v2.3M12 18.3v2.3M4.6 12h2.3M17.1 12h2.3M6.8 6.8l1.6 1.6M15.6 15.6l1.6 1.6M6.8 17.2l1.6-1.6M15.6 8.4l1.6-1.6"/>'},
-  {id:'semana', label:'Programa', icon:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="4.4" r="1.15" fill="currentColor" stroke="none"/><circle cx="19.6" cy="12" r="1.15" fill="currentColor" stroke="none"/><circle cx="12" cy="19.6" r="1.15" fill="currentColor" stroke="none"/><circle cx="4.4" cy="12" r="1.15" fill="currentColor" stroke="none"/>'},
-  {group:'Tienda'},
-  {id:'ventas',   label:'Ventas',  icon:AREAS.ventas.icon},
-  {group:'Restaurante'},
-  {id:'pedidos',  label:'Comandas', icon:'<circle cx="12" cy="12" r="8.4"/><path d="M8.2 12.3l2.4 2.4 5.2-5.6"/>'},
-  {id:'horno',    label:'Horno',   icon:'<circle cx="12" cy="13.3" r="7.1"/><circle cx="12" cy="13.3" r="3"/><path d="M12 3.2c1.7 2.2 1.7 3.9 0 5.4-1.7-1.5-1.7-3.2 0-5.4Z"/>'},
-  {id:'menu',     label:'Menú',    desk:true, icon:'<circle cx="12" cy="12" r="8.4"/><path d="M8.4 8.2h7.2M8.4 12h7.2M8.4 15.8h4.4"/>'},
-  {id:'recetas',  label:'Recetas', desk:true, icon:'<circle cx="12" cy="12" r="8.4"/><path d="M9 8v8M9 8c2.4 0 2.6 1.4 2.6 2.4S11.4 12.8 9 12.8M15.4 8.2v7.6M15.4 8.2c-1.4 0-1.9 1.7-1.9 3.9s.5 3.7 1.9 3.7"/>'},
-  {group:'Experiencias'},
-  {id:'lecciones',label:'Experiencias',short:'Exp.',icon:AREAS.lecciones.icon},
-  {id:'forecast', label:'Marea', icon:'<circle cx="12" cy="6.6" r="2.1"/><path d="M3 13.8c2.1 0 2.1 1.7 4.2 1.7s2.1-1.7 4.2-1.7 2.1 1.7 4.2 1.7 2.1-1.7 4.4-1.7"/><path d="M3 18.4c2.1 0 2.1 1.7 4.2 1.7s2.1-1.7 4.2-1.7 2.1 1.7 4.2 1.7 2.1-1.7 4.4-1.7"/>'},
-  {group:'Servicios'},
-  {id:'reservas', label:'Servicios',icon:AREAS.reservas.icon},
-  {id:'rentas',   label:'Rentas',  desk:true, icon:AREAS.rentas.icon},
-  {group:'Negocio'},
-  {id:'clientes', label:'Clientes', desk:true, icon:'<circle cx="12" cy="12" r="8.4"/><circle cx="12" cy="9.6" r="2.6"/><path d="M7.4 16.5c.9-2.4 2.5-3.6 4.6-3.6s3.7 1.2 4.6 3.6"/>'},
-  {id:'convocatorias', label:'Convocatorias', short:'Convoc.', desk:true, icon:'<circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><path d="M8.4 8.4a5.1 5.1 0 0 1 7.2 0M5.6 5.6a9 9 0 0 1 12.8 0M8.4 15.6a5.1 5.1 0 0 0 7.2 0M5.6 18.4a9 9 0 0 0 12.8 0"/>'},
-  {id:'equipo',   label:'El Círculo',  desk:true, icon:'<circle cx="12" cy="12" r="7.6"/><circle cx="12" cy="4.4" r="1.7" fill="currentColor" stroke="none"/><circle cx="19.6" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="12" cy="19.6" r="1.7" fill="currentColor" stroke="none"/><circle cx="4.4" cy="12" r="1.7" fill="currentColor" stroke="none"/>'},
-  {id:'caja',     label:'Caja',    desk:true, icon:'<circle cx="9.3" cy="14.3" r="5.6"/><circle cx="14.7" cy="9.7" r="5.6"/>'},
-  {id:'totales',  label:'Totales', desk:true, icon:'<circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 6.9 12"/>'},
-  {id:'ajustes',  label:'Ajustes', desk:true, icon:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none"/><path d="M12 3.8v2.6M12 17.6v2.6M4 12h2.6M17.4 12H20"/>'},
+  {id:'programa', label:'Programa', icon:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="4.4" r="1.15" fill="currentColor" stroke="none"/><circle cx="19.6" cy="12" r="1.15" fill="currentColor" stroke="none"/><circle cx="12" cy="19.6" r="1.15" fill="currentColor" stroke="none"/><circle cx="4.4" cy="12" r="1.15" fill="currentColor" stroke="none"/>',
+    children:[
+      {id:'semana',   label:'Calendario'},
+      {id:'forecast', label:'Marea'},
+    ]},
+  {id:'ventasGrp', label:'Ventas', icon:AREAS.ventas.icon,
+    children:[
+      {id:'ventas',    label:'Productos'},
+      {id:'lecciones', label:'Experiencias', short:'Exp.'},
+      {id:'reservas',  label:'Servicios'},
+      {id:'rentas',    label:'Rentas'},
+      {id:'menu',      label:'Menú'},
+    ]},
+  {id:'operacionGrp', label:'Operación', icon:'<circle cx="12" cy="12" r="8.4"/><path d="M8.2 12.3l2.4 2.4 5.2-5.6"/>',
+    children:[
+      {id:'pedidos', label:'Comandas'},
+      {id:'horno',   label:'Horno'},
+      {id:'recetas', label:'Recetas'},
+    ]},
+  {id:'negocioGrp', label:'Negocio', icon:'<circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 6.9 12"/>',
+    children:[
+      {id:'clientes',      label:'Clientes'},
+      {id:'convocatorias', label:'Convocatorias', short:'Convoc.'},
+      {id:'equipo',        label:'El Círculo'},
+      {id:'caja',          label:'Caja'},
+      {id:'totales',       label:'Totales'},
+    ]},
+  {id:'ajustes',  label:'Ajustes', icon:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none"/><path d="M12 3.8v2.6M12 17.6v2.6M4 12h2.6M17.4 12H20"/>'},
 ];
+/* mapea cualquier id de pantalla (hoja) al grupo principal al que pertenece */
+function navParent(leaf){
+  for(const n of NAV){
+    if(n.id===leaf) return n;
+    if(n.children && n.children.some(c=>c.id===leaf)) return n;
+  }
+  return NAV[0];
+}
+const lastChildFor = {};
 
 const METHODS = ['CASH $','CASH ₡','SINPE','TARJETA','TRANSFER','PAYPAL','CORTESÍA'];
 /* idiomas que puede hablar un instructor */
@@ -1337,20 +1364,33 @@ const UI = {stageFilter:'all', catFilter:'all', period:'mes', aperiod:'semana', 
 
 function buildNav(){
   $('#nav').innerHTML = '<div class="brand"><img id="brandLogo" alt="Divine Circle"></div>' +
-    NAV.map(n=>{
-      if(n.group) return `<div class="navsep"></div>`;
-      const cls = 'navbtn' + (n.mob?' mobonly':'');
-      const lab = n.short ? `<span class="mobonly">${n.short}</span><span class="deskonly">${n.label}</span>` : n.label;
-      return `<button class="${cls}" data-tab="${n.id}"><svg viewBox="0 0 24 24">${n.icon}</svg>${lab}</button>`;
-    }).join('');
-  $('#nav').querySelectorAll('.navbtn').forEach(b=>b.addEventListener('click',()=>{
-    if(b.dataset.tab==='mas'){ sheetMas(); return; }
-    go(b.dataset.tab);
+    '<div class="navmain">' + NAV.map(n=>
+      `<button class="navbtn" data-nav="${n.id}"><svg viewBox="0 0 24 24">${n.icon}</svg>${n.label}</button>`
+    ).join('') + '</div>' +
+    '<div class="navsub" id="navsub"></div>';
+  $('#nav').querySelectorAll('[data-nav]').forEach(b=>b.addEventListener('click',()=>{
+    const n = NAV.find(x=>x.id===b.dataset.nav);
+    go(n.children ? (lastChildFor[n.id] || n.children[0].id) : n.id);
   }));
+}
+function renderNavShell(){
+  const grp = navParent(TAB);
+  document.querySelectorAll('[data-nav]').forEach(b=>b.classList.toggle('on', b.dataset.nav===grp.id));
+  const sub = $('#navsub');
+  if(!sub) return;
+  if(!grp.children){ sub.innerHTML=''; sub.classList.remove('show'); return; }
+  sub.classList.add('show');
+  sub.innerHTML = grp.children.map(c=>{
+    const lab = c.short ? `<span class="mobonly">${c.short}</span><span class="deskonly">${c.label}</span>` : c.label;
+    return `<button class="subbtn ${c.id===TAB?'on':''}" data-subtab="${c.id}">${lab}</button>`;
+  }).join('');
+  sub.querySelectorAll('[data-subtab]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.subtab)));
 }
 function go(tab){
   TAB=tab; closeSheet();
-  document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('on', b.dataset.tab===tab));
+  const grp = navParent(tab);
+  if(grp.children) lastChildFor[grp.id]=tab;
+  renderNavShell();
   render();
   window.scrollTo(0,0);
 }

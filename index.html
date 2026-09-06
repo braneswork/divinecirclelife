@@ -665,6 +665,10 @@ async function cloudLogin(){
   startApp();
 }
 
+const PENDING_KEY = KEY+'-pending';
+function markPending(v){ try{ if(v) localStorage.setItem(PENDING_KEY,'1'); else localStorage.removeItem(PENDING_KEY); }catch(e){} }
+function hasPending(){ try{ return localStorage.getItem(PENDING_KEY)==='1'; }catch(e){ return false; } }
+
 let cloudSaveTimer = null;
 function cloudSave(){
   clearTimeout(cloudSaveTimer);
@@ -674,15 +678,20 @@ function cloudSave(){
       const { error } = await sb.from('divine_circle_data')
         .upsert({ id: CLOUD_ROW_ID, data: DB, updated_at: new Date().toISOString() });
       if(error) throw error;
+      markPending(false);
       DB.settings.lastBackup = new Date().toLocaleString('es-CR');
       const hhmm = new Date().toLocaleTimeString('es-CR', {hour:'2-digit', minute:'2-digit'});
       setSyncBadge('ok','Respaldado ✓ '+hhmm);
       maybeSnapshotBackup();
     }catch(err){
+      markPending(true);
       setSyncBadge('err','Sin conexión — guardado local');
     }
   }, 1000);
 }
+
+/* al volver la conexión, reintenta subir sola sin esperar a que edites algo más */
+window.addEventListener('online', ()=>{ if(hasPending()) cloudSave(); });
 
 /* copia de seguridad con historial: como mucho una por hora, se conservan las últimas 30 */
 let lastSnapshotAt = 0;
@@ -4682,6 +4691,14 @@ async function boot(){
   const { data:{ session } } = await sb.auth.getSession();
   if(!session){
     document.getElementById('cloudLogin').style.display='flex';
+    return;
+  }
+  if(hasPending()){
+    /* quedaron cambios de una sesión offline sin subir: los empujamos
+       primero en vez de traer la versión vieja del servidor y perderlos */
+    setSyncBadge('busy','Subiendo cambios pendientes…');
+    cloudSave();
+    startApp();
     return;
   }
   setSyncBadge('busy','Cargando desde Supabase…');

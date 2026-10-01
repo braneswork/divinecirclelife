@@ -10,12 +10,14 @@ import {
 import { Bubble, Donut, Focus, PayMark, Stage, Timeline, ViewToggle, spiralCells, useToast, useViewMode } from '@dc/ui';
 import { HelpDot } from '../HelpDot';
 import { Fijos, FijoSheet } from './Fijos';
-import { removeOrder, restoreOrder, saveOrder, today, updateOrder, useStore } from '../store';
+import { OrderSheet, draftFromLines, type OrderDraft } from './OrderSheet';
+import { removeOrder, restoreOrder, today, updateOrder, useStore } from '../store';
 
 /** Texto rápido de un pedido para editarlo escribiendo (la fecha se conserva sola). */
-const toQuickText = (o: Order) =>
-  [o.items.map(i => `${i.qty}${i.code}`).join(' '), o.client, o.amountOverride != null ? String(o.amountOverride) : '']
-    .filter(Boolean).join(' ') + (o.note ? ` // ${o.note}` : '');
+const orderDraft = (o: Order): OrderDraft => ({
+  cart: Object.fromEntries(o.items.map(i => [i.offeringId, i.qty])), client: o.client, date: o.date,
+  pay: o.pay, note: o.note, amountOverride: o.amountOverride,
+});
 
 export function Ventas() {
   const orders = useStore(s => s.orders);
@@ -25,15 +27,14 @@ export function Ventas() {
   const now = today();
   const [day, setDay] = useState(now);
   const [text, setText] = useState('');
-  const [editing, setEditing] = useState<string | null>(null);
+  const [sheet, setSheet] = useState<{ draft: OrderDraft; editId?: string } | null>(null);
   const [focus, setFocus] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [view, setView] = useViewMode('ventas', ['programa', 'hoy', 'semanal', 'historial']);
   const recurring = useStore(s => s.recurring);
   const [fijo, setFijo] = useState<string | null>(null);
 
-  const editingDate = editing ? orders.find(o => o.id === editing)?.date : undefined;
-  const parsed = useMemo(() => parseQuick(text, offerings, now, editingDate ?? now), [text, offerings, now, editingDate]);
+  const parsed = useMemo(() => parseQuick(text, offerings, now), [text, offerings, now]);
 
   const dayOrders = useMemo(
     () => orders.filter(o => o.date === day).sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
@@ -62,21 +63,23 @@ export function Ventas() {
   function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!parsed.ok) return toast(QUICK_ERRORS[parsed.error] + (parsed.detail ? `: ${parsed.detail}` : ''));
-    const o = saveOrder(parsed, editing ?? undefined);
-    setText(''); setEditing(null); setDay(o.date);
-    toast(`${editing ? 'Actualizado' : 'Anotado'}: ${o.client} · ${dayLabel(o.date, now)}`);
-    inputRef.current?.focus();
+    // lo escrito abre la ficha de la venta: ahí se revisa, se marca semanal o el pago
+    setSheet({ draft: draftFromLines(parsed.lines, { client: parsed.client, date: parsed.date, pay: parsed.pay, note: parsed.note, weekly: parsed.weekly, amountOverride: parsed.amountOverride }) });
   }
 
   function edit(o: Order) {
-    setFocus(null); setEditing(o.id); setText(toQuickText(o));
-    setTimeout(() => inputRef.current?.focus(), 0);
+    setFocus(null); setSheet({ draft: orderDraft(o), editId: o.id });
+  }
+
+  function saved(client: string, date: string) {
+    if (!sheet?.editId) setText('');
+    toast(`${sheet?.editId ? 'Actualizado' : 'Anotado'}: ${client} · ${dayLabel(date, now)}`);
+    setSheet(null); setDay(date);
   }
 
   function remove(o: Order) {
     setFocus(null);
     removeOrder(o.id);
-    if (editing === o.id) { setEditing(null); setText(''); }
     toast(`Borrado: ${o.client}`, { label: 'Deshacer', run: () => restoreOrder(o) });
   }
 
@@ -112,7 +115,7 @@ export function Ventas() {
           {t.credit > 0 && <span className="small credit">+ {colones(t.credit)}</span>}
         </Bubble>
         {bySize.map((o, i) => (
-          <Bubble key={o.id} at={cells[i].at} d={cells[i].d} className={'order ' + o.status + (editing === o.id ? ' editing' : '')} onClick={() => setFocus(o.id)} label={o.client}>
+          <Bubble key={o.id} at={cells[i].at} d={cells[i].d} className={'order ' + o.status + (sheet?.editId === o.id ? ' editing' : '')} onClick={() => setFocus(o.id)} label={o.client}>
             <strong>{o.client.split(' ')[0]}</strong>
             {cells[i].d > 9 && <span className="small">{o.items.map(it => `${it.qty}${it.code}`).join(' ')}</span>}
             <PayMark state={o.pay} size={cells[i].d > 12 ? 20 : 14} />
@@ -137,18 +140,20 @@ export function Ventas() {
           autoComplete="off" autoCapitalize="off" spellCheck={false}
           value={text}
           onChange={e => setText(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Escape') { setText(''); setEditing(null); } }}
-          placeholder={editing ? 'Editando venta…' : 'Rápido: 2C 1MS Soleida'}
+          onKeyDown={e => { if (e.key === 'Escape') setText(''); }}
+          placeholder="Rápido: 2C 1MS Soleida"
           aria-label="Venta rápida"
         />
         <HelpDot topic="ventas" label="Cómo escribir una venta rápida" />
-        <button className="go" disabled={!parsed.ok} aria-label={editing ? 'Guardar' : 'Anotar'}>↵</button>
+        <button className="go" disabled={!parsed.ok} aria-label="Anotar">↵</button>
       </form>
       <p className={'hint' + (text.trim() && !parsed.ok ? ' bad' : '')} aria-live="polite">
         {parsed.ok
           ? <><b>{matchClient(parsed.client, clients)?.name ?? parsed.client}</b>{matchClient(parsed.client, clients)?.billing === 'mensual' ? ' (mensual)' : ''} · {parsed.lines.map(l => `${l.qty} ${l.offering.name}`).join(', ')} · {colones(parsed.amountOverride ?? parsed.lines.reduce((s, l) => s + Math.round(l.qty * l.offering.price * (1 - (matchClient(parsed.client, clients)?.discounts[l.offering.id] ?? 0))), 0))} · {dayLabel(parsed.date, now)} · {PAY[parsed.pay].mark} {PAY[parsed.pay].label}{parsed.weekly ? ' · ↻ semanal' : ''}</>
           : text.trim() ? QUICK_ERRORS[parsed.error] + (parsed.detail ? `: ${parsed.detail}` : '') : null}
       </p>
+
+      {sheet && <OrderSheet initial={sheet.draft} editId={sheet.editId} onClose={() => setSheet(null)} onDone={saved} />}
 
       {fijo && recurring.some(r => r.id === fijo) && <FijoSheet r={recurring.find(r => r.id === fijo)!} isNew={false} onClose={() => setFijo(null)} />}
 

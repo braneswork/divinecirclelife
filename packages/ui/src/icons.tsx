@@ -18,6 +18,8 @@ const PATHS: Record<string, string> = {
   ayuda: '<circle cx="12" cy="12" r="8.6"/><path d="M9.6 9.5a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5v.6"/><circle cx="12" cy="16.9" r=".4" fill="currentColor"/>',
   lista: '<circle cx="5.5" cy="6.5" r="1.6"/><circle cx="5.5" cy="12" r="1.6"/><circle cx="5.5" cy="17.5" r="1.6"/><path d="M10 6.5h9.5M10 12h9.5M10 17.5h9.5"/>',
   repetir: '<path d="M17.5 4.5 20 7l-2.5 2.5"/><path d="M4 11.5V10a3 3 0 0 1 3-3h13"/><path d="M6.5 19.5 4 17l2.5-2.5"/><path d="M20 12.5V14a3 3 0 0 1-3 3H4"/>',
+  proximos: '<rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><path d="M10.5 13.5h3.5M12.5 12l1.5 1.5-1.5 1.5"/>',
+  historial: '<path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4 4.5v3.8h3.8"/><path d="M12 8v4.2l2.8 1.8"/>',
   volver: '<path d="M14.5 6 8.5 12l6 6"/>',
 };
 

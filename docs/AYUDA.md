@@ -11,7 +11,7 @@ el logo de arriba (o la flecha, o Escape) te devuelve al centro. Abajo, cada íc
 - Sin señal, el hub sigue funcionando en un dispositivo donde ya habías entrado.
 
 ### Círculo o historial {#historial}
-- En Ventas, Clientes (dentro de cada cliente) y Caja hay un interruptor **Círculo / Historial**.
+- En Clientes (dentro de cada cliente) y Caja hay un interruptor **Círculo / Historial**; Ventas tiene **Programa / Día / Semanal / Historial**.
 - **Historial** muestra los movimientos en orden, agrupados por día, con la marca de pago (✓ ✕ +) y el monto; arriba de cada día, el neto.
 - En Caja el historial junta ventas y salidas del mes; toca una salida para borrarla.
 - El hub recuerda la vista elegida en cada pantalla.
@@ -29,7 +29,9 @@ el logo de arriba (o la flecha, o Escape) te devuelve al centro. Abajo, cada íc
 - Esta tienda es la misma que verá la gente en la web.
 
 ### Ventas {#ventas}
-- El día va al centro con el total, lo que no se ha pagado (✕) y el crédito (+).
+- Ventas abre en **Programa**: lo que viene, día por día (Hoy, Mañana, …). Cada día muestra cuántos pedidos y cuánto suman, los círculos de lo que hay que preparar y cada pedido con su marca de pago, productos, monto y estado. Toca un pedido para su detalle; toca el título del día para verlo en círculo.
+- Las otras pestañas: **Día** (la espiral de un día, eligiendo el día arriba), **Semanal** (pedidos fijos) e **Historial** (últimos 30 días).
+- En **Día**: el día va al centro con el total, lo que no se ha pagado (✕) y el crédito (+).
 - El anillo de colores alrededor del centro es lo que hay que preparar; los círculos de abajo lo detallan (16 BB = 16 Burger Buns).
 - Las ventas del día forman una espiral: la más grande ocupa el círculo más grande.
 - Los días de la semana van arriba; ‹ y › para moverte.

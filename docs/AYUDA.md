@@ -4,8 +4,8 @@ Todo en el hub es un círculo con cosas alrededor. Tocar un círculo lo expande 
 el logo de arriba (o la flecha, o Escape) te devuelve al centro. Abajo, cada ícono dice a dónde lleva.
 
 ### Acceso {#acceso}
-- **Contraseña**: la forma diaria. Funciona en el navegador y en la app instalada.
-- **Enlace al correo**: para la primera vez o si olvidaste la contraseña. Ábrelo **en el mismo navegador** donde lo pediste. Ya dentro, crea tu contraseña en Ajustes → Cuenta → contraseña (mínimo 10 caracteres, con letras y números).
+- **Correo y contraseña**: la forma diaria. Funciona en el navegador y en la app instalada.
+- **Solo correo**: sin contraseña; te llega un enlace. Para la primera vez o si olvidaste la contraseña. Ábrelo **en el mismo navegador** donde lo pediste. Ya dentro, crea tu contraseña en Ajustes → Cuenta → contraseña (mínimo 10 caracteres, con letras y números).
 - Si el correo trae un código de 6 dígitos (cuando hay correo propio configurado), también puedes escribirlo en los círculos.
 - Si entras con una cuenta que no es del equipo verás **Sin acceso**: pide al dueño que te agregue.
 - Sin señal, el hub sigue funcionando en un dispositivo donde ya habías entrado.

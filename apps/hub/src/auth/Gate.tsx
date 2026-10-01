@@ -119,20 +119,20 @@ function Login() {
       <div className={'gate-orb' + (busy ? ' loading' : '')}><img src={mark} alt="" /></div>
       <h1>Hub</h1>
       <div className="gate-tabs" role="tablist">
-        <button role="tab" aria-selected={mode === 'clave'} className={mode === 'clave' ? 'on' : ''} onClick={() => { setMode('clave'); setMsg(''); }}>Contraseña</button>
-        <button role="tab" aria-selected={mode === 'correo'} className={mode === 'correo' ? 'on' : ''} onClick={() => { setMode('correo'); setMsg(''); }}>Enlace al correo</button>
+        <button role="tab" aria-selected={mode === 'clave'} className={mode === 'clave' ? 'on' : ''} onClick={() => { setMode('clave'); setMsg(''); }}>Correo y contraseña</button>
+        <button role="tab" aria-selected={mode === 'correo'} className={mode === 'correo' ? 'on' : ''} onClick={() => { setMode('correo'); setMsg(''); }}>Solo correo</button>
       </div>
       {mode === 'clave' ? (
         <form onSubmit={withPassword} className="gate-form">
           <input type="email" inputMode="email" autoComplete="username" autoFocus value={email} onChange={e => setEmail(e.target.value)} placeholder="tu@correo.com" aria-label="Correo" />
           <input type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Contraseña" aria-label="Contraseña" />
           <button className="gate-btn" disabled={busy}>Entrar</button>
-          <p className="muted small-note">¿Primera vez? Entra con «Enlace al correo» y crea tu contraseña en Ajustes → Cuenta.</p>
+          <p className="muted small-note">¿Primera vez o sin contraseña? Usa «Solo correo»: te llega un enlace para entrar.</p>
         </form>
       ) : step === 'correo' ? (
         <form onSubmit={send} className="gate-form">
           <input id="gate-email" type="email" inputMode="email" autoComplete="email" autoFocus value={email} onChange={e => setEmail(e.target.value)} placeholder="tu@correo.com" aria-label="Correo" />
-          <button className="gate-btn" disabled={busy}>Enviar enlace</button>
+          <button className="gate-btn" disabled={busy}>Enviarme el enlace</button>
         </form>
       ) : (
         <form className="gate-form" onSubmit={e => { e.preventDefault(); void verify(); }}>

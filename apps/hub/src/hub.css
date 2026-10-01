@@ -421,3 +421,7 @@ code { font-size: .85em; word-break: break-all; }
 .mh-sky svg { grid-row: span 2; color: #E58A5C; }
 .checkout .add-more { align-self: flex-start; }
 .checkout .add-codes .chip { padding: 5px 11px; }
+.checkout .money-row { flex-wrap: nowrap; }
+.checkout .money-row input { flex: 1 1 auto; min-width: 0; }
+.checkout .money-row .minus { color: var(--bad); white-space: nowrap; font-size: 14px; text-transform: none; letter-spacing: 0; }
+.checkout-lines .promo { display: block; font-size: 10.5px; font-weight: 600; color: var(--gold); }

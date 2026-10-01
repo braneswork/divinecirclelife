@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { buildInvoice, invoiceTotals, invoiceableOrders, matchClient, nextInvoiceNumber } from './billing';
+import { autoAdjustments, buildInvoice, invoiceTotals, invoiceableOrders, matchClient, nextInvoiceNumber } from './billing';
+import { orderDue, orderPaid, orderTotal, payTotals, priceOn } from './money';
 import { summarize, monthRange } from './finance';
 import { SEED_CLIENTS, SEED_OFFERINGS, INVOICE_SEQ_START } from './seed';
 import type { Expense, Order } from './types';
@@ -83,5 +84,29 @@ describe('lo que generó cada oferta', () => {
     expect(st.get(bb.id)).toMatchObject({ units: 30, orders: 2, topClients: [{ client: 'Mantarraya Café', units: 30 }] });
     expect(st.get(bb.id)!.revenue).toBe(7616 + 6664);
     expect(st.get(c.id)!.revenue).toBe(4000);
+  });
+});
+
+describe('precio especial, descuento y abono', () => {
+  const base = { items: [{ offeringId: 'pan-c', code: 'C', name: 'Campesino', qty: 2, unitPrice: 4000 }] };
+  it('el precio especial vale hasta su último día', () => {
+    const o = { price: 4000, promoPrice: 3000, promoUntil: '2026-11-30' };
+    expect(priceOn(o, '2026-11-30')).toBe(3000);
+    expect(priceOn(o, '2026-12-01')).toBe(4000);
+    expect(priceOn({ price: 4000 }, '2026-11-01')).toBe(4000);
+  });
+  it('el descuento de una vez resta del total', () => {
+    expect(orderTotal({ ...base, discount: 1000 })).toBe(7000);
+    expect(orderTotal({ ...base, amountOverride: 6000, discount: 500 })).toBe(5500);
+  });
+  it('el abono queda pagado y el resto se debe', () => {
+    const o = { ...base, pay: 'pending' as const, paidAmount: 5000 };
+    expect(orderPaid(o)).toBe(5000);
+    expect(orderDue(o)).toBe(3000);
+    expect(payTotals([{ ...o, status: 'pendiente' } as never])).toMatchObject({ total: 8000, paid: 5000, pending: 3000 });
+  });
+  it('la factura suma descuentos y abonos como ajustes', () => {
+    const orders = [{ ...base, discount: 1000, pay: 'pending', paidAmount: 2000 }] as never[];
+    expect(autoAdjustments(orders)).toEqual([{ label: 'Descuentos', amount: -1000 }, { label: 'Abonos', amount: -2000 }]);
   });
 });

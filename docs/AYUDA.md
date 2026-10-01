@@ -64,6 +64,12 @@ Lo escrito llena la ficha de la venta; ahí se puede cambiar todo antes de guard
 ### Marca de pago {#pago}
 - **✓** pagado (verde) · **✕** no pagó (rojo) · **+** crédito a favor (magenta; dorado en tema oscuro).
 - Tocar la marca avanza en ese orden.
+- **Abono**: si pagó solo una parte, deja la marca en ✕ y escribe en la ficha de la venta cuánto **abonó**. La venta muestra "abonó ₡5.000 · debe ₡3.100"; en Caja lo abonado cuenta como cobrado y el resto como no pagó. Cuando pague todo, marca ✓.
+
+### Descuento de una vez {#descuento}
+- En la ficha de la venta, **Descuento de esta vez**: escribe un monto (`1000`) o un porcentaje (`10%`). Se resta del total solo en esa venta.
+- Es distinto del descuento negociado de un cliente (como Mantarraya), que se pone en Clientes y se aplica siempre.
+- En la factura mensual, los descuentos y abonos del mes salen como ajustes.
 
 ### Productos {#productos}
 - Panal con todo lo que se vende (pan, bebidas, café…). Las que más generaron este mes van más cerca del centro.
@@ -71,6 +77,7 @@ Lo escrito llena la ficha de la venta; ahí se puede cambiar todo antes de guard
 - El color del borde es su pilar; el halo dorado indica que sale en la web.
 - Toca uno para entrar a su ficha: precio, lo que generó, unidades, pedidos, quién más lo pide y su pilar. Con ‹ › cambias de mes.
 - **Editar ficha**: foto, nombre, código, precio, presentación, familia, proyecto, pilar, descripción, activo y visible en la web.
+- **Precio especial**: en Editar ficha, un precio y **hasta el** día que dura (ej. ₡3.000 hasta el 30 de noviembre). Mientras dure, las ventas, los fijos y la web usan ese precio; al día siguiente vuelve solo al precio normal. Borra el precio especial para quitarlo antes.
 - El **código** es lo que se escribe en la venta rápida: `2C` = 2 Campesino. Empieza con letra y no se repite.
 - El **+** del panal agrega un producto nuevo.
 

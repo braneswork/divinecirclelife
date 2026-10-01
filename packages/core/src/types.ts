@@ -31,6 +31,10 @@ export interface Offering {
   name: string;
   /** precio en colones */
   price: number;
+  /** precio especial por un tiempo (ej. ₡3.000 en vez de ₡4.000) */
+  promoPrice?: number;
+  /** último día del precio especial, YYYY-MM-DD; después vuelve al precio normal */
+  promoUntil?: string;
   active: boolean;
   /** visible en la web */
   public: boolean;
@@ -79,6 +83,10 @@ export interface Order {
   items: OrderItem[];
   /** monto acordado que reemplaza la suma de las líneas */
   amountOverride?: number;
+  /** descuento de esta vez, en colones */
+  discount?: number;
+  /** abono: lo que ya pagó de una venta marcada ✕ (debe el resto) */
+  paidAmount?: number;
   status: OrderStatus;
   pay: PayState;
   note?: string;

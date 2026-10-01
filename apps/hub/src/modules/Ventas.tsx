@@ -4,7 +4,7 @@
 
 import { useMemo, useRef, useState } from 'react';
 import {
-  PAY, QUICK_ERRORS, matchClient, STATUS_FLOW, addDays, bakeSummary, colones, dayLabel, fromISODate, orderTotal, parseQuick, payTotals,
+  PAY, QUICK_ERRORS, matchClient, STATUS_FLOW, addDays, bakeSummary, colones, dayLabel, fromISODate, orderDue, orderTotal, parseQuick, payTotals, priceOn,
   type Order,
 } from '@dc/core';
 import { Bubble, Donut, Focus, PayMark, Stage, Timeline, ViewToggle, spiralCells, useToast, useViewMode } from '@dc/ui';
@@ -16,7 +16,7 @@ import { removeOrder, restoreOrder, today, updateOrder, useStore } from '../stor
 /** Texto rápido de un pedido para editarlo escribiendo (la fecha se conserva sola). */
 const orderDraft = (o: Order): OrderDraft => ({
   cart: Object.fromEntries(o.items.map(i => [i.offeringId, i.qty])), client: o.client, date: o.date,
-  pay: o.pay, note: o.note, amountOverride: o.amountOverride,
+  pay: o.pay, note: o.note, amountOverride: o.amountOverride, discount: o.discount ?? undefined, paidAmount: o.paidAmount ?? undefined,
 });
 
 export function Ventas() {
@@ -149,7 +149,7 @@ export function Ventas() {
       </form>
       <p className={'hint' + (text.trim() && !parsed.ok ? ' bad' : '')} aria-live="polite">
         {parsed.ok
-          ? <><b>{matchClient(parsed.client, clients)?.name ?? parsed.client}</b>{matchClient(parsed.client, clients)?.billing === 'mensual' ? ' (mensual)' : ''} · {parsed.lines.map(l => `${l.qty} ${l.offering.name}`).join(', ')} · {colones(parsed.amountOverride ?? parsed.lines.reduce((s, l) => s + Math.round(l.qty * l.offering.price * (1 - (matchClient(parsed.client, clients)?.discounts[l.offering.id] ?? 0))), 0))} · {dayLabel(parsed.date, now)} · {PAY[parsed.pay].mark} {PAY[parsed.pay].label}{parsed.weekly ? ' · ↻ semanal' : ''}</>
+          ? <><b>{matchClient(parsed.client, clients)?.name ?? parsed.client}</b>{matchClient(parsed.client, clients)?.billing === 'mensual' ? ' (mensual)' : ''} · {parsed.lines.map(l => `${l.qty} ${l.offering.name}`).join(', ')} · {colones(parsed.amountOverride ?? parsed.lines.reduce((s, l) => s + Math.round(l.qty * priceOn(l.offering, parsed.date) * (1 - (matchClient(parsed.client, clients)?.discounts[l.offering.id] ?? 0))), 0))} · {dayLabel(parsed.date, now)} · {PAY[parsed.pay].mark} {PAY[parsed.pay].label}{parsed.weekly ? ' · ↻ semanal' : ''}</>
           : text.trim() ? QUICK_ERRORS[parsed.error] + (parsed.detail ? `: ${parsed.detail}` : '') : null}
       </p>
 
@@ -167,6 +167,8 @@ export function Ventas() {
               <span className="small">{focused.items.map(i => `${i.qty} ${i.name}`).join(' · ')}</span>
               {focused.note && <em className="small">{focused.note}</em>}
               <strong className="price">{colones(orderTotal(focused))}</strong>
+              {!!focused.discount && <span className="small">descuento −{colones(focused.discount)}</span>}
+              {focused.pay === 'pending' && !!focused.paidAmount && <span className="small warn">abonó {colones(focused.paidAmount)} · debe {colones(orderDue(focused))}</span>}
               <PayMark state={focused.pay} size={34} onChange={pay => updateOrder(focused.id, { pay })} />
               <span className="small">{PAY[focused.pay].label}</span>
             </>
@@ -218,7 +220,7 @@ function Programa({ orders, now, onOpen, onDay }: { orders: Order[]; now: string
                     </span>
                     <span className="prog-side">
                       <b>{colones(orderTotal(o))}</b>
-                      <small>{o.status === 'cancelado' ? 'cancelado' : STATUS_FLOW[o.status].label}</small>
+                      <small>{o.pay === 'pending' && o.paidAmount ? `debe ${colones(orderDue(o))}` : o.status === 'cancelado' ? 'cancelado' : STATUS_FLOW[o.status].label}</small>
                     </span>
                   </button>
                 </li>

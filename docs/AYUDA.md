@@ -24,9 +24,10 @@ el logo de arriba (o la flecha, o Escape) te devuelve al centro. Abajo, cada íc
 - Debajo de la flor, **el parte de mar** en una línea: la curvita de marea con un punto dorado donde está ahora, la próxima alta o baja, el swell, el viento (verde si es offshore) y el clima. Tocarlo abre la página Mar con todo el detalle.
 
 ### Nueva entrada (+) {#entrada}
-- Arriba, la venta rápida: escribe y presiona Enter, por ejemplo `2C 1MS Soleida`.
+- Arriba, la venta rápida: escribe, por ejemplo `2C 1MS Soleida`, y presiona Enter. Se abre la ficha de la venta ya llena para revisarla.
 - Debajo, la tienda: todo el catálogo con fotos. Toca la foto para ver la ficha; usa − y + para la cantidad.
-- **Continuar** abre el cierre: cliente, día, marca de pago y nota. Si el cliente está registrado se aplica su descuento.
+- **Continuar** abre la misma ficha.
+- **La ficha de la venta** es igual desde la venta rápida, la tienda o **editar**: cantidades, **+ agregar producto**, cliente, día, **solo esta vez / ↻ semanal** (con los días), marca de pago y nota. Si el cliente está registrado se aplica su descuento. Enter o **Anotar venta** guarda.
 - Esta tienda es la misma que verá la gente en la web.
 
 ### Ventas {#ventas}
@@ -41,6 +42,8 @@ el logo de arriba (o la flecha, o Escape) te devuelve al centro. Abajo, cada íc
 - **M** en una venta: el cliente paga mensual; **F**: ya está en una factura.
 
 #### Venta rápida
+Lo escrito llena la ficha de la venta; ahí se puede cambiar todo antes de guardar.
+
 | Escribes | Significa |
 | `1C Soleida` | 1 Campesino para Soleida, hoy |
 | `2C 1MS Ana 9000` | monto acordado ₡9.000 |
@@ -52,7 +55,7 @@ el logo de arriba (o la flecha, o Escape) te devuelve al centro. Abajo, cada íc
 
 ### Pedidos fijos (semanales) {#fijos}
 - Un fijo se repite ciertos días de la semana: cada semana o cada 2 semanas.
-- Se crean con `semanal` en la venta rápida, con **↻ semanal** al cerrar una venta en **+** (eligiendo los días), o en Ventas → **Semanal** → **+ Nuevo fijo**.
+- Se crean con **↻ semanal** en la ficha de la venta (eligiendo los días; también al editar una venta), escribiendo `semanal` en la venta rápida, o en Ventas → **Semanal** → **+ Nuevo fijo**.
 - El hub crea solo las ventas de los próximos 14 días. Llevan un **↻**. Cada una se prepara, se cobra y se factura como cualquier venta.
 - Si borras la venta de un día, ese día queda saltado y no vuelve a aparecer. Cancelarla también la deja fuera.
 - **Ventas → Semanal**: la semana de lunes a domingo con las unidades fijas de cada día (toca un día para ver qué preparar), el total por semana y la lista de fijos. Toca uno para cambiar días, productos, pago, fechas, **pausar** o **borrar**. Pausar o cambiar un fijo rehace sus ventas futuras que aún no se tocaron.

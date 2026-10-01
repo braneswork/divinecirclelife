@@ -419,3 +419,5 @@ code { font-size: .85em; word-break: break-all; }
 .mh-tide { color: #9B7FD1; font-weight: 800; text-align: center; }
 .mh-sky { display: grid !important; grid-template-columns: auto auto; column-gap: 5px; justify-content: end; align-items: center; text-align: right; }
 .mh-sky svg { grid-row: span 2; color: #E58A5C; }
+.checkout .add-more { align-self: flex-start; }
+.checkout .add-codes .chip { padding: 5px 11px; }

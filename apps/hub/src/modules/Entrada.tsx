@@ -1,16 +1,14 @@
 /* + Entrada: anotar una venta escribiéndola rápido ("2C 1MS Soleida") o
    eligiendo de la tienda (todo el catálogo con fotos). La tienda es la misma
-   pieza que usará la web; aquí el cierre pide cliente, día y marca de pago. */
+   pieza que usará la web. Las dos terminan en la ficha de la venta. */
 
 import { useMemo, useRef, useState } from 'react';
-import {
-  PAY, QUICK_ERRORS, WEEKDAY_SHORT, WEEK_ORDER, addDays, colones, dayLabel, fromISODate, matchClient, parseQuick,
-  type PayState,
-} from '@dc/core';
-import { PayMark, Sheet, Shop, Stepper, cartLines, useToast, type Cart } from '@dc/ui';
-import { now as nowIso, saveOrder, saveRecurring, today, useStore } from '../store';
+import { PAY, QUICK_ERRORS, dayLabel, matchClient, parseQuick } from '@dc/core';
+import { Shop, useToast, type Cart } from '@dc/ui';
+import { today, useStore } from '../store';
 import { useNav } from '../nav';
 import { HelpDot } from '../HelpDot';
+import { OrderSheet, draftFromLines, type OrderDraft } from './OrderSheet';
 
 export function Entrada() {
   const offerings = useStore(s => s.offerings);
@@ -20,7 +18,7 @@ export function Entrada() {
   const now = today();
   const [text, setText] = useState('');
   const [cart, setCart] = useState<Cart>({});
-  const [checkout, setCheckout] = useState(false);
+  const [draft, setDraft] = useState<(OrderDraft & { shop?: boolean }) | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const parsed = useMemo(() => parseQuick(text, offerings, now), [text, offerings, now]);
   const active = offerings.filter(o => o.active);
@@ -31,9 +29,8 @@ export function Entrada() {
   function quick(e: React.FormEvent) {
     e.preventDefault();
     if (!parsed.ok) return toast(QUICK_ERRORS[parsed.error] + (parsed.detail ? `: ${parsed.detail}` : ''));
-    const o = saveOrder(parsed);
-    setText('');
-    done(o.client, o.date);
+    // lo escrito abre la misma ficha que la tienda, para revisar, marcar semanal o pago
+    setDraft(draftFromLines(parsed.lines, { client: parsed.client, date: parsed.date, pay: parsed.pay, note: parsed.note, weekly: parsed.weekly, amountOverride: parsed.amountOverride }));
   }
 
   return (
@@ -42,7 +39,7 @@ export function Entrada() {
         offerings={active}
         cart={cart}
         onCart={setCart}
-        onCheckout={() => setCheckout(true)}
+        onCheckout={() => setDraft({ cart, shop: true })}
         filters={false}
         top={
           <div className="quick-top">
@@ -62,102 +59,14 @@ export function Entrada() {
           </div>
         }
       />
-      {checkout && (
-        <Checkout
-          cart={cart}
-          onCart={setCart}
-          onClose={() => setCheckout(false)}
-          onDone={(client, date) => { setCart({}); setCheckout(false); done(client, date); }}
+      {draft && (
+        <OrderSheet
+          initial={draft}
+          onCart={draft.shop ? setCart : undefined}
+          onClose={() => setDraft(null)}
+          onDone={(client, date) => { if (draft.shop) setCart({}); else setText(''); setDraft(null); done(client, date); }}
         />
       )}
     </>
-  );
-}
-
-function Checkout({ cart, onCart, onClose, onDone }: { cart: Cart; onCart: (c: Cart) => void; onClose: () => void; onDone: (client: string, date: string) => void }) {
-  const offerings = useStore(s => s.offerings);
-  const clients = useStore(s => s.clients);
-  const toast = useToast();
-  const now = today();
-  const [client, setClient] = useState('');
-  const [date, setDate] = useState(now);
-  const [pay, setPay] = useState<PayState>('pending');
-  const [note, setNote] = useState('');
-  const [weekly, setWeekly] = useState(false);
-  const [days, setDays] = useState<number[]>([]);
-  const lines = cartLines(cart, offerings);
-  const known = matchClient(client, clients);
-  const lineTotal = (id: string, qty: number, price: number) => Math.round(qty * price * (1 - (known?.discounts[id] ?? 0)));
-  const total = lines.reduce((s, l) => s + lineTotal(l.offering.id, l.qty, l.offering.price), 0);
-
-  function save(e: React.FormEvent) {
-    e.preventDefault();
-    if (!lines.length) return onClose();
-    if (!client.trim()) return toast('¿Para quién es?');
-    if (weekly) {
-      const weekdays = days.length ? days : [fromISODate(date).getDay()];
-      saveRecurring({
-        id: crypto.randomUUID(), client: known?.name ?? client.trim(), clientId: known?.id,
-        items: lines.map(l => ({ offeringId: l.offering.id, qty: l.qty })), weekdays, every: 1, start: date,
-        pay, note: note.trim() || undefined, active: true, skips: [], createdAt: nowIso(),
-      });
-      toast(`Fijo creado: cada ${weekdays.map(w => WEEKDAY_SHORT[w]).join(', ')}`);
-      return onDone(known?.name ?? client.trim(), date);
-    }
-    const o = saveOrder({ lines, client: client.trim(), date, pay, note: note.trim() || undefined });
-    onDone(o.client, o.date);
-  }
-
-  return (
-    <Sheet onClose={onClose} label="Cerrar la venta" className="checkout">
-      <form onSubmit={save}>
-        <h2>Nueva venta</h2>
-        <ul className="checkout-lines">
-          {lines.map(l => (
-            <li key={l.offering.id}>
-              <span>{l.offering.name}{known?.discounts[l.offering.id] ? <em> −{Math.round(known.discounts[l.offering.id] * 100)}%</em> : null}</span>
-              <Stepper value={l.qty} onChange={n => onCart({ ...cart, [l.offering.id]: n })} name={l.offering.name} />
-              <b>{colones(lineTotal(l.offering.id, l.qty, l.offering.price))}</b>
-            </li>
-          ))}
-        </ul>
-        <label className="field wide">Cliente
-          <input value={client} onChange={e => setClient(e.target.value)} list="dc-clients" placeholder="Nombre o cliente registrado" autoFocus />
-          <datalist id="dc-clients">{clients.filter(c => c.active).map(c => <option key={c.id} value={c.name} />)}</datalist>
-          {known && <small className="ok-text">{known.name} · {known.billing === 'mensual' ? 'va a su factura mensual' : 'contado'}</small>}
-        </label>
-        <div className="field wide">{weekly ? 'Empieza' : 'Día'}
-          <div className="beads">
-            {Array.from({ length: 7 }, (_, i) => addDays(now, i)).map(d => (
-              <button type="button" key={d} className={'bead' + (d === date ? ' on' : '')} onClick={() => setDate(d)} aria-pressed={d === date}>
-                <span>{d === now ? 'hoy' : 'dlmmjvs'[fromISODate(d).getDay()]}</span><b>{fromISODate(d).getDate()}</b>
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="field wide">Se repite
-          <div className="row">
-            <button type="button" className={'chip' + (!weekly ? ' on' : '')} onClick={() => setWeekly(false)}>solo esta vez</button>
-            <button type="button" className={'chip' + (weekly ? ' on' : '')} onClick={() => { setWeekly(true); if (!days.length) setDays([fromISODate(date).getDay()]); }}>↻ semanal</button>
-          </div>
-          {weekly && (
-            <div className="week small">
-              {WEEK_ORDER.map(w => (
-                <button type="button" key={w} className={'week-day' + (days.includes(w) ? ' on' : '')} aria-pressed={days.includes(w)}
-                  onClick={() => setDays(days.includes(w) ? days.filter(x => x !== w) : [...days, w].sort())}><span>{WEEKDAY_SHORT[w]}</span></button>
-              ))}
-            </div>
-          )}
-        </div>
-        <div className="field wide pay-row"><span>Pago <HelpDot topic="pago" label="Marca de pago" /></span>
-          <span><PayMark state={pay} size={34} onChange={setPay} /> {PAY[pay].label}</span>
-        </div>
-        <label className="field wide">Nota<input value={note} onChange={e => setNote(e.target.value)} placeholder="Opcional" /></label>
-        <div className="checkout-foot">
-          <span>Total <b>{colones(total)}</b></span>
-          <button className="shop-go">{weekly ? 'Crear fijo' : 'Anotar venta'}</button>
-        </div>
-      </form>
-    </Sheet>
   );
 }

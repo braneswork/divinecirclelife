@@ -1,0 +1,15 @@
+{
+  "name": "Divine Circle · Hub",
+  "short_name": "DC Hub",
+  "description": "Pedidos, catálogo y círculo de proyectos de Divine Circle",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#33082F",
+  "theme_color": "#33082F",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

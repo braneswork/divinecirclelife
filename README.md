@@ -11,7 +11,6 @@ packages/core   Modelo del círculo, pilares, entrada rápida de pedidos, totale
 packages/ui     UI kit circular: Stage, Bubble, panal, espiral de Doyle, Zoom, Photo, Shop…
 packages/brand  Paleta, fuentes, logos e imágenes de los pilares.
 supabase/       Esquema de la base de datos (proyecto nuevo de Supabase).
-legacy/hub-v1   Hub anterior (derivado de Take Off), solo como referencia.
 ```
 
 ## Uso

@@ -96,7 +96,7 @@ Proyecto de Supabase: `vbeubyipzzpfbdjswavh` (URL y clave anon pública en
 ## Publicación (Vercel)
 
 `vercel.json` construye con `npm run build:site` y publica `dist/`:
-hub en `/`, web en `/web/`, UI kit en `/kit/` y el hub anterior en `/legacy/`.
+hub en `/`, web en `/web/`, UI kit en `/kit/`.
 Cada rama genera una vista previa; `main` es producción.
 
 ## Próximos módulos

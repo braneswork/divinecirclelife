@@ -283,3 +283,8 @@ code { font-size: .85em; word-break: break-all; }
   padding: 13px 18px; font: inherit; font-size: 16px; text-align: center;
 }
 .small-note { font-size: 12.5px !important; }
+
+.pick-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 12px; }
+.pick-grid button { width: 100%; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; container-type: inline-size; }
+.pick-grid strong { font-size: 13px; }
+.pick-grid small { color: var(--muted); }

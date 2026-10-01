@@ -35,9 +35,11 @@ export function cartLines(cart: Cart, offerings: Offering[]) {
   return offerings.filter(o => cart[o.id] > 0).map(o => ({ offering: o, qty: cart[o.id] }));
 }
 
-export function Shop({ offerings, cart, onCart, onCheckout, families = DEFAULT_FAMILIES, top, checkoutLabel = 'Continuar' }: {
+export function Shop({ offerings, cart, onCart, onCheckout, families = DEFAULT_FAMILIES, top, checkoutLabel = 'Continuar', filters = true }: {
   offerings: Offering[]; cart: Cart; onCart: (c: Cart) => void; onCheckout: () => void;
   families?: ShopFamily[]; top?: ReactNode; checkoutLabel?: string;
+  /** familias y buscador (la web los usa; el + del hub no) */
+  filters?: boolean;
 }) {
   const [fam, setFam] = useState('todo');
   const [q, setQ] = useState('');
@@ -56,14 +58,14 @@ export function Shop({ offerings, cart, onCart, onCheckout, families = DEFAULT_F
   return (
     <div className="shop">
       {top}
-      <div className="shop-bar">
+      {filters && <div className="shop-bar">
         <nav className="shop-tabs" aria-label="Familias" data-noswipe>
           {tabs.map(f => (
             <button key={f.id} className={f.id === fam ? 'on' : ''} onClick={() => setFam(f.id)} aria-pressed={f.id === fam}>{f.label}</button>
           ))}
         </nav>
         <input className="shop-search" value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar" aria-label="Buscar en la tienda" />
-      </div>
+      </div>}
 
       <ul className="shop-grid">
         {shown.map(o => {

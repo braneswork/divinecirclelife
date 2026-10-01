@@ -16,6 +16,7 @@ const PATHS: Record<string, string> = {
   mas: '<path d="M12 5v14M5 12h14"/>',
   menos: '<path d="M5 12h14"/>',
   ayuda: '<circle cx="12" cy="12" r="8.6"/><path d="M9.6 9.5a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5v.6"/><circle cx="12" cy="16.9" r=".4" fill="currentColor"/>',
+  lista: '<circle cx="5.5" cy="6.5" r="1.6"/><circle cx="5.5" cy="12" r="1.6"/><circle cx="5.5" cy="17.5" r="1.6"/><path d="M10 6.5h9.5M10 12h9.5M10 17.5h9.5"/>',
   volver: '<path d="M14.5 6 8.5 12l6 6"/>',
 };
 

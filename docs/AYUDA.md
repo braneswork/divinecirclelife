@@ -10,6 +10,12 @@ el logo de arriba (o la flecha, o Escape) te devuelve al centro. Abajo, cada íc
 - Si entras con una cuenta que no es del equipo verás **Sin acceso**: pide al dueño que te agregue.
 - Sin señal, el hub sigue funcionando en un dispositivo donde ya habías entrado.
 
+### Círculo o historial {#historial}
+- En Ventas, Clientes (dentro de cada cliente) y Caja hay un interruptor **Círculo / Historial**.
+- **Historial** muestra los movimientos en orden, agrupados por día, con la marca de pago (✓ ✕ +) y el monto; arriba de cada día, el neto.
+- En Caja el historial junta ventas y salidas del mes; toca una salida para borrarla.
+- El hub recuerda la vista elegida en cada pantalla.
+
 ### Inicio {#inicio}
 - Al centro: las ventas de hoy. Alrededor: Ventas (arriba), Experiencias, Clientes, Caja (abajo), Círculo y Productos.
 - Cada círculo muestra un dato rápido: por entregar, lo generado este mes, lo que falta cobrar, el balance.
@@ -59,7 +65,7 @@ el logo de arriba (o la flecha, o Escape) te devuelve al centro. Abajo, cada íc
 
 ### Clientes {#clientes}
 - Panal con los clientes. Borde dorado: cobro mensual con factura. Cada uno muestra lo del mes o lo que debe.
-- Toca uno para entrar: alrededor, sus descuentos negociados por producto (toca uno para cambiarlo).
+- Toca uno para entrar: alrededor, solo los productos que pide o tiene negociados, con su descuento (toca uno para cambiarlo o quitarlo). El **+** suma otro producto a ese cliente.
 - Toca el centro para editar sus datos: contacto, teléfono, dirección, alias (para escribirlo corto en ventas) y forma de cobro.
 - Abajo: **Emitir factura** junta las ventas del mes sin facturar, por producto y con su descuento. Los círculos con número son sus facturas.
 

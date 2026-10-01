@@ -4,10 +4,10 @@
 
 import { useRef, useState } from 'react';
 import {
-  INVOICE_SEQ_START, MESES, buildInvoice, colones, invoiceLines, invoiceTotals, invoiceableOrders, monthOf, orderTotal,
+  INVOICE_SEQ_START, MESES, buildInvoice, pillarOf, colones, invoiceLines, invoiceTotals, invoiceableOrders, monthOf, orderTotal,
   type Client, type Invoice,
 } from '@dc/core';
-import { Bubble, Focus, Icon, Stage, Track, Zoom, around, hexCells, originOf, useToast, type Origin } from '@dc/ui';
+import { Bubble, Focus, Icon, Photo, Sheet, Stage, Timeline, Track, ViewToggle, Zoom, around, hexCells, originOf, useToast, useViewMode, type Origin, type TimelineItem } from '@dc/ui';
 import { now, saveInvoice, today, upsertClient, useStore } from '../store';
 import { InvoiceSheet } from './InvoiceSheet';
 import { HelpDot } from '../HelpDot';
@@ -108,15 +108,20 @@ function ClientPage({ id, onBack }: { id: string; onBack: () => void }) {
   const [edit, setEdit] = useState<Client | null>(null);
   const [disc, setDisc] = useState<{ offeringId: string; value: string } | null>(null);
   const [sheet, setSheet] = useState<string | null>(null);
+  const [picking, setPicking] = useState(false);
+  const [view, setView] = useViewMode('cliente');
 
-  const products = offerings.filter(o => o.active && o.kind === 'producto');
+  // solo lo que este cliente pide o tiene negociado (una clave con 0 = precio de lista, fijado a mano)
+  const ordered = new Set(orders.filter(o => o.clientId === id).flatMap(o => o.items.map(i => i.offeringId)));
+  const products = offerings.filter(o => o.kind !== 'experiencia' && (o.id in client.discounts || ordered.has(o.id)));
+  const others = offerings.filter(o => o.active && o.kind === 'producto' && !products.includes(o));
   const monthOrders = orders.filter(o => o.clientId === id && o.status !== 'cancelado' && monthOf(o.date) === period);
   const pendingInv = invoiceableOrders(orders, id, period);
   const preview = invoiceLines(pendingInv);
   const previewTotal = preview.reduce((s, l) => s + l.total, 0);
   const previewSub = preview.reduce((s, l) => s + l.subtotal, 0);
   const mine = invoices.filter(i => i.clientId === id).sort((a, b) => b.number.localeCompare(a.number));
-  const n = products.length;
+  const n = products.length + 1;
 
   function issue() {
     const [y, m] = period.split('-').map(Number);
@@ -133,7 +138,7 @@ function ClientPage({ id, onBack }: { id: string; onBack: () => void }) {
     const v = Number(disc.value.replace(',', '.'));
     if (Number.isNaN(v) || v < 0 || v >= 100) return toast('Escribe un porcentaje entre 0 y 99');
     const discounts = { ...client.discounts };
-    if (v) discounts[disc.offeringId] = v / 100; else delete discounts[disc.offeringId];
+    discounts[disc.offeringId] = v / 100; // 0 = precio de lista, pero queda en su círculo
     upsertClient({ ...client, discounts });
     setDisc(null);
   }
@@ -148,9 +153,25 @@ function ClientPage({ id, onBack }: { id: string; onBack: () => void }) {
           <button onClick={() => setPeriod(shiftMonth(period, 1))} aria-label="Mes siguiente">›</button>
         </div>
       </div>
+      <ViewToggle value={view} onChange={setView} />
 
+      {view === 'historial' ? (
+        <Timeline today={today()} empty={`Sin movimientos en ${monthName(period)}.`} items={[
+          ...monthOrders.map((o): TimelineItem => ({
+            id: o.id, date: o.date, mark: o.pay,
+            title: o.items.map(i => `${i.qty} ${i.name}`).join(' · '),
+            detail: [o.invoiceId ? `factura ${invoices.find(x => x.id === o.invoiceId)?.number ?? ''}` : client.billing === 'mensual' ? 'por facturar' : null, o.note].filter(Boolean).join(' · ') || undefined,
+            amount: orderTotal(o),
+          })),
+          ...mine.filter(i => i.period === period).map((i): TimelineItem => ({
+            id: i.id, date: i.date, tone: i.status === 'pagada' ? 'var(--ok)' : 'var(--bad)', muted: true,
+            title: `Factura ${i.number}`, detail: i.status === 'pagada' ? 'pagada' : 'pendiente de pago', amount: invoiceTotals(i).total,
+            onClick: () => setSheet(i.id),
+          })),
+        ]} />
+      ) : (
       <Stage>
-        <Track r={40} dashed />
+        <Track r={36} dashed />
         <Bubble d={36} className={'core client-core' + (client.billing === 'mensual' ? ' monthly' : '')} onClick={() => setEdit({ ...client })} label="Editar cliente">
           <span className="eyebrow">{client.billing === 'mensual' ? 'cobro mensual' : 'contado'}</span>
           <strong className="mid">{client.name}</strong>
@@ -158,13 +179,15 @@ function ClientPage({ id, onBack }: { id: string; onBack: () => void }) {
           {client.contact && <span className="small">{client.contact}</span>}
         </Bubble>
         {products.map((p, i) => (
-          <Bubble key={p.id} at={around(i, n, 40)} d={n > 10 ? 12 : 14} className={'discount' + (client.discounts[p.id] ? ' on' : '')}
+          <Bubble key={p.id} at={around(i, n, 36, n === 2 ? 90 : 0)} d={n > 10 ? 12 : 17} className={'discount' + (client.discounts[p.id] ? ' on' : '')}
             onClick={() => setDisc({ offeringId: p.id, value: client.discounts[p.id] ? String(Math.round(client.discounts[p.id] * 100)) : '' })} label={`Descuento ${p.name}`}>
             <strong className="code">{p.code}</strong>
             <span className="small">{pct(client.discounts[p.id])}</span>
           </Bubble>
         ))}
+        <Bubble at={around(products.length, n, 36, n === 2 ? 90 : 0)} d={n > 10 ? 12 : 15} className="add" onClick={() => setPicking(true)} label="Sumar un producto a este cliente"><span>+</span></Bubble>
       </Stage>
+      )}
 
       {pendingInv.length > 0 ? (
         <div className="invoice-cta">
@@ -187,6 +210,25 @@ function ClientPage({ id, onBack }: { id: string; onBack: () => void }) {
         </div>
       )}
 
+      {picking && (
+        <Sheet onClose={() => setPicking(false)} label="Sumar producto" className="team-sheet">
+          <h2>Sumar producto a {client.name}</h2>
+          {others.length ? (
+            <ul className="pick-grid">
+              {others.map(o => (
+                <li key={o.id}>
+                  <button onClick={() => { setPicking(false); setDisc({ offeringId: o.id, value: '' }); }}>
+                    <Photo src={o.image} name={o.name} tone={pillarOf(o.pillar)?.color} />
+                    <strong>{o.name}</strong>
+                    <small>{colones(o.price)}</small>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : <p className="muted">Ya están todos los productos.</p>}
+        </Sheet>
+      )}
+
       {disc && (
         <Focus
           onClose={() => setDisc(null)}
@@ -199,7 +241,14 @@ function ClientPage({ id, onBack }: { id: string; onBack: () => void }) {
               <button hidden />
             </form>
           }
-          actions={[{ label: 'guardar', onClick: saveDiscount, tone: 'on' }, { label: 'sin descuento', onClick: () => setDisc({ ...disc, value: '' }) }]}
+          actions={[
+            { label: 'guardar', onClick: saveDiscount, tone: 'on' },
+            { label: 'sin descuento', onClick: () => setDisc({ ...disc, value: '' }) },
+            ...(disc.offeringId in client.discounts ? [{ label: 'quitar', tone: 'bad' as const, onClick: () => {
+              const discounts = { ...client.discounts }; delete discounts[disc.offeringId];
+              upsertClient({ ...client, discounts }); setDisc(null);
+            } }] : []),
+          ]}
         />
       )}
 

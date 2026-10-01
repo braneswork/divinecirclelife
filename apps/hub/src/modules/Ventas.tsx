@@ -7,7 +7,7 @@ import {
   PAY, QUICK_ERRORS, matchClient, STATUS_FLOW, addDays, bakeSummary, colones, dayLabel, fromISODate, orderTotal, parseQuick, payTotals,
   type Order,
 } from '@dc/core';
-import { Bubble, Donut, Focus, PayMark, Stage, spiralCells, useToast } from '@dc/ui';
+import { Bubble, Donut, Focus, PayMark, Stage, Timeline, ViewToggle, spiralCells, useToast, useViewMode } from '@dc/ui';
 import { HelpDot } from '../HelpDot';
 import { removeOrder, restoreOrder, saveOrder, today, updateOrder, useStore } from '../store';
 
@@ -27,6 +27,7 @@ export function Ventas() {
   const [editing, setEditing] = useState<string | null>(null);
   const [focus, setFocus] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [view, setView] = useViewMode('ventas');
 
   const editingDate = editing ? orders.find(o => o.id === editing)?.date : undefined;
   const parsed = useMemo(() => parseQuick(text, offerings, now, editingDate ?? now), [text, offerings, now, editingDate]);
@@ -82,6 +83,14 @@ export function Ventas() {
         <button className="bead nav" onClick={() => setDay(addDays(day, 1))} aria-label="Día siguiente">›</button>
       </nav>
 
+      <ViewToggle value={view} onChange={setView} />
+      {view === 'historial' ? (
+        <Timeline today={now} empty="Sin ventas este día." items={dayOrders.map(o => ({
+          id: o.id, date: o.date, mark: o.pay, muted: o.status === 'cancelado',
+          title: o.client, detail: `${o.items.map(i => `${i.qty} ${i.name}`).join(' · ')} · ${o.status === 'cancelado' ? 'cancelado' : STATUS_FLOW[o.status].label}`,
+          amount: orderTotal(o), onClick: () => setFocus(o.id),
+        }))} />
+      ) : (
       <Stage>
         <Donut r={14.6} width={2.2} labels={false} parts={bake.map(b => ({ key: b.code, value: b.qty, label: `${b.qty}${b.code}` }))} />
         <Bubble d={26} className="core">
@@ -101,6 +110,7 @@ export function Ventas() {
           </Bubble>
         ))}
       </Stage>
+      )}
 
       {bake.length > 0 && (
         <div className="prep" aria-label="Para preparar">

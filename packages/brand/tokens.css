@@ -1,0 +1,72 @@
+/* Divine Circle — tokens de marca compartidos por la web y el hub.
+   Fuentes: Cinzel (títulos) + Montserrat (texto), cargadas desde Google Fonts en cada app. */
+:root {
+  --plum-900: #33082F;
+  --plum-800: #3D0C3A;
+  --plum-700: #45103F;
+  --plum-600: #5C1153;
+  --plum-line: #5C2A56;
+  --gold: #E3A83E;
+  --gold-light: #F4CE7C;
+  --bone: #FBF5EA;
+  --sand: #F0E4CF;
+  --ink: #241128;
+  --magenta: #B0187E;
+
+  --font-display: 'Cinzel', Georgia, serif;
+  --font-body: 'Montserrat', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* tema claro */
+  --bg: var(--bone);
+  --fg: var(--ink);
+  --card: #FFFFFF;
+  --soft: #F7EFE0;
+  --line: #E7DBC9;
+  --muted: #7A6A72;
+  --accent: var(--magenta);
+  --ok: #3F9C6E;
+  --ok-soft: #DCF2E9;
+  --warn: #96690E;
+  --warn-soft: #FBEEDA;
+  --bad: #E0776A;
+  --bad-soft: #FBE3DF;
+
+  --radius: 16px;
+  --radius-sm: 10px;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: var(--plum-900);
+    --fg: #F7ECF2;
+    --card: var(--plum-700);
+    --soft: var(--plum-800);
+    --line: var(--plum-line);
+    --muted: #CFA9C6;
+    --accent: var(--gold);
+    --ok: #3BD494;
+    --ok-soft: #12291F;
+    --warn: #F0B94E;
+    --warn-soft: #2A2113;
+    --bad: #FF6B52;
+    --bad-soft: #2C1714;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: var(--plum-900);
+  --fg: #F7ECF2;
+  --card: var(--plum-700);
+  --soft: var(--plum-800);
+  --line: var(--plum-line);
+  --muted: #CFA9C6;
+  --accent: var(--gold);
+  --ok: #3BD494;
+  --ok-soft: #12291F;
+  --warn: #F0B94E;
+  --warn-soft: #2A2113;
+  --bad: #FF6B52;
+  --bad-soft: #2C1714;
+  color-scheme: dark;
+}

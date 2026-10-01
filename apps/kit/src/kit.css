@@ -1,0 +1,25 @@
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
+.kit { max-width: 760px; margin: 0 auto; padding: 24px 16px 80px; }
+.kit-head { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; padding-bottom: 20px; border-bottom: 1px solid var(--line); }
+.kit-logo { width: min(320px, 80vw); height: auto; }
+.kit-nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 16px; }
+.kit-nav a { color: var(--muted); text-decoration: none; font-size: 12px; text-transform: uppercase; letter-spacing: .14em; }
+.kit-section { padding: 36px 0; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.kit-stage { width: min(100%, 560px); }
+.kit-stage.small { width: min(100%, 380px); }
+.pillar-card { border: 2px solid; border-radius: var(--radius); padding: 14px 18px; text-align: center; max-width: 480px; background: var(--card); }
+.pillar-card p { margin: 6px 0; }
+.philosophy { text-align: center; max-width: 560px; color: var(--muted); margin: 0; }
+.motto { letter-spacing: .3em; text-transform: uppercase; color: var(--gold); font-size: 12px; margin: 0; }
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; width: 100%; }
+.swatch { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 12px; }
+.swatch i { width: 54px; height: 54px; border-radius: 50%; border: 1px solid var(--line); margin-bottom: 4px; }
+.swatch span { color: var(--muted); font-family: ui-monospace, monospace; }
+.type { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+.type p { margin: 0; }
+.t-display { font-family: var(--font-display); font-size: 26px; letter-spacing: .06em; }
+.t-title { font-weight: 500; letter-spacing: .32em; font-size: 14px; }
+.row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.sep { width: 1px; height: 32px; background: var(--line); margin: 0 8px; }
+.kit-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; width: 100%; justify-items: center; }

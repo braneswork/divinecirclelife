@@ -95,8 +95,9 @@ Proyecto de Supabase: `vbeubyipzzpfbdjswavh` (URL y clave anon pública en
 
 ## Seguridad
 
-- **Puerta del hub** (`apps/hub/src/auth/Gate.tsx`): sin sesión no se muestra nada. Acceso por
-  correo con código de 6 dígitos (OTP) o enlace (PKCE). Con sesión pero fuera de `members`:
+- **Puerta del hub** (`apps/hub/src/auth/Gate.tsx`): sin sesión no se muestra nada. Acceso con
+  contraseña (diario) o enlace al correo con PKCE (primera vez / olvido); código OTP si la
+  plantilla lo incluye. Con sesión pero fuera de `members`:
   "Sin acceso". Sin señal, se permite seguir si el dispositivo ya tenía sesión y rol.
 - **Salir** sincroniza y borra los datos locales y la sesión del dispositivo.
 - **Base de datos**: RLS en todas las tablas; el público solo ve proyectos activos y ofertas
@@ -110,11 +111,12 @@ Proyecto de Supabase: `vbeubyipzzpfbdjswavh` (URL y clave anon pública en
 
 ### Configuración en Supabase (una vez)
 1. SQL Editor: `supabase/setup.sql` y luego `supabase/seguridad.sql`.
-2. Authentication → Email Templates → **Magic Link**: incluir el código, por ejemplo
-   `<h2>Tu código: {{ .Token }}</h2><p>o entra con <a href="{{ .ConfirmationURL }}">este enlace</a>.</p>`
+2. (Opcional, requiere SMTP propio: Authentication → Emails → Set up SMTP, p. ej. Resend)
+   Plantilla **Magic link or OTP** con el código `{{ .Token }}` y el enlace `{{ .ConfirmationURL }}`.
+   Sin SMTP propio se usa el enlace (el correo de Supabase tiene un límite bajo de envíos por hora).
 3. Authentication → URL Configuration: Site URL = dirección de Vercel; Redirect URLs = esa
    dirección con `/**` y `https://*.vercel.app/**`.
-4. Entrar al hub (quedas como dueño). Después, Authentication → Sign In / Providers → desactivar
+4. Entrar al hub con el enlace (quedas como dueño) y crear la contraseña en Ajustes → Cuenta. Después, Authentication → Sign In / Providers → desactivar
    **Allow new users to sign up**: desde ahí solo entran personas invitadas (Users → Invite user)
    y agregadas en Ajustes → Equipo.
 

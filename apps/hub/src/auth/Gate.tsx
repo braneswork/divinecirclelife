@@ -1,6 +1,7 @@
 /* La puerta del hub: sin sesión no se ve nada.
-   - Acceso con el correo: llega un código de 6 dígitos (y un enlace). El código
-     sirve también en la app instalada, donde el enlace se abriría en otro navegador.
+   - Contraseña: la forma diaria (funciona también en la app instalada).
+   - Enlace al correo: para la primera vez o si se olvida la contraseña. Si la plantilla
+     de correo incluye {{ .Token }} (requiere SMTP propio), también sirve el código.
    - Con sesión pero fuera del equipo: "sin acceso".
    - Sin señal: si este dispositivo ya tenía sesión y rol, se puede seguir trabajando. */
 
@@ -65,6 +66,8 @@ export function Gate({ children }: { children: ReactNode }) {
 
 function Login() {
   const [email, setEmail] = useState('');
+  const [mode, setMode] = useState<'clave' | 'correo'>('clave');
+  const [password, setPassword] = useState('');
   const [step, setStep] = useState<'correo' | 'codigo'>('correo');
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
@@ -93,6 +96,16 @@ function Login() {
     setTimeout(() => codeRef.current?.focus(), 50);
   }
 
+  async function withPassword(e: React.FormEvent) {
+    e.preventDefault();
+    const clean = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean) || !password) return setMsg('Escribe tu correo y contraseña');
+    setBusy(true); setMsg('');
+    const { error } = await sb!.auth.signInWithPassword({ email: clean, password });
+    setBusy(false);
+    if (error) setMsg(/rate|too many/i.test(error.message) ? 'Demasiados intentos. Espera unos minutos.' : 'Correo o contraseña incorrectos.');
+  }
+
   async function verify(value = code) {
     if (value.length !== 6) return;
     setBusy(true); setMsg('');
@@ -105,15 +118,25 @@ function Login() {
     <div className="gate-card">
       <div className={'gate-orb' + (busy ? ' loading' : '')}><img src={mark} alt="" /></div>
       <h1>Hub</h1>
-      {step === 'correo' ? (
+      <div className="gate-tabs" role="tablist">
+        <button role="tab" aria-selected={mode === 'clave'} className={mode === 'clave' ? 'on' : ''} onClick={() => { setMode('clave'); setMsg(''); }}>Contraseña</button>
+        <button role="tab" aria-selected={mode === 'correo'} className={mode === 'correo' ? 'on' : ''} onClick={() => { setMode('correo'); setMsg(''); }}>Enlace al correo</button>
+      </div>
+      {mode === 'clave' ? (
+        <form onSubmit={withPassword} className="gate-form">
+          <input type="email" inputMode="email" autoComplete="username" autoFocus value={email} onChange={e => setEmail(e.target.value)} placeholder="tu@correo.com" aria-label="Correo" />
+          <input type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Contraseña" aria-label="Contraseña" />
+          <button className="gate-btn" disabled={busy}>Entrar</button>
+          <p className="muted small-note">¿Primera vez? Entra con «Enlace al correo» y crea tu contraseña en Ajustes → Cuenta.</p>
+        </form>
+      ) : step === 'correo' ? (
         <form onSubmit={send} className="gate-form">
-          <label htmlFor="gate-email" className="eyebrow">Correo</label>
-          <input id="gate-email" type="email" inputMode="email" autoComplete="email" autoFocus value={email} onChange={e => setEmail(e.target.value)} placeholder="tu@correo.com" />
-          <button className="gate-btn" disabled={busy}>Enviar código</button>
+          <input id="gate-email" type="email" inputMode="email" autoComplete="email" autoFocus value={email} onChange={e => setEmail(e.target.value)} placeholder="tu@correo.com" aria-label="Correo" />
+          <button className="gate-btn" disabled={busy}>Enviar enlace</button>
         </form>
       ) : (
         <form className="gate-form" onSubmit={e => { e.preventDefault(); void verify(); }}>
-          <p className="muted">Te enviamos un código de 6 dígitos a <b>{email.trim().toLowerCase()}</b>. También puedes abrir el enlace del correo en este mismo navegador.</p>
+          <p className="muted">Te enviamos un correo a <b>{email.trim().toLowerCase()}</b>. Abre el enlace <b>en este mismo navegador</b>. Si el correo trae un código de 6 dígitos, escríbelo aquí:</p>
           <label className="code-circles" htmlFor="gate-code">
             {Array.from({ length: 6 }, (_, i) => <span key={i} className={i < code.length ? 'on' : ''}>{code[i] ?? ''}</span>)}
             <input
@@ -121,10 +144,9 @@ function Login() {
               onChange={e => { const v = e.target.value.replace(/\D/g, '').slice(0, 6); setCode(v); if (v.length === 6) void verify(v); }}
             />
           </label>
-          <button className="gate-btn" disabled={busy || code.length !== 6}>Entrar</button>
           <div className="gate-row">
             <button type="button" className="gate-link" onClick={() => { setStep('correo'); setMsg(''); }}>Cambiar correo</button>
-            <button type="button" className="gate-link" disabled={wait > 0 || busy} onClick={() => send()}>{wait ? `Reenviar en ${wait}s` : 'Reenviar código'}</button>
+            <button type="button" className="gate-link" disabled={wait > 0 || busy} onClick={() => send()}>{wait ? `Reenviar en ${wait}s` : 'Reenviar'}</button>
           </div>
         </form>
       )}

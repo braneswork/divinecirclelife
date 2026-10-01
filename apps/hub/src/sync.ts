@@ -56,3 +56,21 @@ export async function pullAll(): Promise<Record<Table, { id: string }[]> | null>
 }
 
 export { TABLES };
+
+/** Rol en el equipo: la primera persona que entra queda como dueña. */
+export async function claimRole(): Promise<string> {
+  if (!(await signedIn())) return 'sin sesión';
+  const { data, error } = await sb!.rpc('claim_ownership');
+  if (error) { report(error); return 'error'; }
+  return data as string;
+}
+
+/** Sube muchas filas y espera (en lotes), para respetar el orden entre tablas. */
+export async function upsertMany(table: Table, rows: object[]): Promise<boolean> {
+  if (!rows.length || !(await signedIn())) return true;
+  for (let i = 0; i < rows.length; i += 200) {
+    const { error } = await sb!.from(table).upsert(rows.slice(i, i + 200).map(toRow));
+    if (error) { report(error); return false; }
+  }
+  return true;
+}

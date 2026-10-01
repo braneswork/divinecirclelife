@@ -12,10 +12,14 @@
     "build": "npm run build -w @dc/hub && npm run build -w @dc/web && npm run build -w @dc/kit",
     "test": "vitest run",
     "typecheck": "tsc -p packages/core && tsc -p packages/ui && tsc -p apps/hub && tsc -p apps/web && tsc -p apps/kit",
-    "dev:kit": "npm run dev -w @dc/kit"
+    "dev:kit": "npm run dev -w @dc/kit",
+    "build:site": "npm run build && node scripts/build-site.mjs"
   },
   "devDependencies": {
     "typescript": "^5.9.3",
     "vitest": "^5.0.3"
+  },
+  "engines": {
+    "node": ">=20.19"
   }
 }

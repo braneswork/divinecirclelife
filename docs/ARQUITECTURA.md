@@ -75,13 +75,28 @@ Tomado de la hoja "Divine Circle 2026":
   - el público solo ve proyectos activos y ofertas publicadas.
   - la web crea pedidos solo vía `place_web_order()`, que valida códigos y calcula precios en el servidor.
 
-## Puesta en marcha de Supabase
+## Puesta en marcha
 
-1. Crear el proyecto nuevo y correr `0001_circulo.sql` en el SQL editor.
-2. Authentication → habilitar inicio por correo (magic link) y agregar la URL del hub como redirect.
-3. Entrar una vez al hub con tu correo y luego registrarte como dueño:
-   `insert into members (user_id, name, role) select id, 'Tu nombre', 'owner' from auth.users where email = 'tu@correo';`
-4. Poner `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` en `apps/hub/.env.local` y `apps/web/.env.local`.
+Proyecto de Supabase: `vbeubyipzzpfbdjswavh` (URL y clave anon pública en
+`packages/core/src/config.ts`; se pueden reemplazar con `VITE_SUPABASE_URL` y
+`VITE_SUPABASE_ANON_KEY`). Nunca poner la service_role key en el repo.
+
+1. Supabase → SQL Editor: correr `supabase/migrations/0001_circulo.sql` completo.
+   Convive con las tablas del hub anterior (`divine_circle_data`, `divine_circle_backups`).
+2. Authentication → Providers: Email activo.
+3. Authentication → URL Configuration: Site URL = la dirección de Vercel del hub, y en
+   Redirect URLs agregar esa dirección con `/**` y `https://*.vercel.app/**` (vistas previas).
+4. Entrar al hub → Ajustes → Nube → correo → enlace. **La primera persona que entra queda
+   como dueña** (`claim_ownership()`); las demás quedan sin acceso hasta que se agreguen a
+   `members`.
+5. La primera sincronización de cada dispositivo sube lo que ya tenía (fichas, fotos, ventas);
+   después la nube manda.
+
+## Publicación (Vercel)
+
+`vercel.json` construye con `npm run build:site` y publica `dist/`:
+hub en `/`, web en `/web/`, UI kit en `/kit/` y el hub anterior en `/legacy/`.
+Cada rama genera una vista previa; `main` es producción.
 
 ## Próximos módulos
 

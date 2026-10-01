@@ -8,3 +8,4 @@ export * from './pillars';
 export * from './billing';
 export * from './finance';
 export * from './expense';
+export * from './config';

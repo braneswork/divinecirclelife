@@ -28,6 +28,25 @@ language sql stable security definer set search_path = public as $$
   select exists (select 1 from public.members where user_id = auth.uid() and role in ('owner', 'admin'));
 $$;
 
+-- La primera persona que entra al hub queda como dueña. Después, nadie más
+-- puede reclamarlo: el equipo se agrega desde members (owner/admin).
+create or replace function public.claim_ownership() returns text
+language plpgsql security definer set search_path = public as $$
+declare v_email text;
+begin
+  if auth.uid() is null then return 'sin sesión'; end if;
+  if exists (select 1 from public.members where user_id = auth.uid()) then
+    return (select role from public.members where user_id = auth.uid());
+  end if;
+  if exists (select 1 from public.members) then return 'sin acceso'; end if;
+  select email into v_email from auth.users where id = auth.uid();
+  insert into public.members (user_id, name, role) values (auth.uid(), coalesce(v_email, ''), 'owner');
+  return 'owner';
+end;
+$$;
+revoke all on function public.claim_ownership() from public;
+grant execute on function public.claim_ownership() to authenticated;
+
 -- ---------------------------------------------------------------- proyectos del círculo
 create table public.projects (
   id         text primary key,

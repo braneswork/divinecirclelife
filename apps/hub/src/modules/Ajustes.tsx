@@ -5,7 +5,7 @@ import type { Session } from '@supabase/supabase-js';
 import { sb } from '../supabase';
 import { syncNow } from '../cloud';
 import { getState, replaceState, type State } from '../store';
-import { syncError } from '../sync';
+import { claimRole, syncError } from '../sync';
 import { useToast } from '@dc/ui';
 import { getTheme, setTheme, type Theme } from '../theme';
 import { Bubble, Focus, Stage, Track, around } from '@dc/ui';
@@ -16,12 +16,13 @@ export function Ajustes() {
   const [session, setSession] = useState<Session | null>(null);
   const [cloud, setCloud] = useState(false);
   const [email, setEmail] = useState('');
+  const [role, setRole] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!sb) return;
     sb.auth.getSession().then(({ data }) => setSession(data.session));
-    const { data } = sb.auth.onAuthStateChange((_e, s) => setSession(s));
+    const { data } = sb.auth.onAuthStateChange((_e, s) => { setSession(s); if (s) void claimRole().then(setRole); });
     return () => data.subscription.unsubscribe();
   }, []);
 
@@ -87,6 +88,9 @@ export function Ajustes() {
               <>
                 <span className="eyebrow">Conectado</span>
                 <strong className="small">{session.user.email}</strong>
+                <span className={'small ' + (role === 'sin acceso' || role === 'error' ? 'warn' : 'ok')}>
+                  {role === 'owner' ? 'dueño' : role === 'admin' ? 'admin' : role === 'staff' ? 'equipo' : role === 'sin acceso' ? 'sin acceso: pide al dueño que te agregue' : role === 'error' ? syncError() : '…'}
+                </span>
               </>
             ) : (
               <form className="circle-form" onSubmit={async e => {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { addDays, colones, dayLabel, toISODate, type Offering } from '@dc/core';
+import { addDays, colones, dayLabel, priceOn, toISODate, type Offering } from '@dc/core';
 import { placeOrder } from './data';
 import { sb } from './supabase';
 
@@ -14,7 +14,7 @@ export function OrderBread({ offerings }: { offerings: Offering[] }) {
 
   const breads = offerings.filter(o => o.kind === 'producto');
   const lines = breads.filter(o => qty[o.code] > 0).map(o => ({ code: o.code, qty: qty[o.code] }));
-  const total = breads.reduce((s, o) => s + (qty[o.code] || 0) * o.price, 0);
+  const total = breads.reduce((s, o) => s + (qty[o.code] || 0) * priceOn(o, date), 0);
   const bump = (code: string, d: number) => setQty(q => ({ ...q, [code]: Math.max(0, Math.min(20, (q[code] || 0) + d)) }));
 
   async function submit(e: React.FormEvent) {
@@ -41,7 +41,7 @@ export function OrderBread({ offerings }: { offerings: Offering[] }) {
           <li key={o.id}>
             <span className="menu-name">{o.name}</span>
             <span className="menu-dots" aria-hidden="true" />
-            <span className="menu-price">{colones(o.price)}</span>
+            <span className="menu-price">{colones(priceOn(o, date))}</span>
             <span className="stepper">
               <button type="button" onClick={() => bump(o.code, -1)} aria-label={`Quitar ${o.name}`} disabled={!qty[o.code]}>−</button>
               <output aria-label={`Cantidad de ${o.name}`}>{qty[o.code] || 0}</output>

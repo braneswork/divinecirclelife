@@ -3,7 +3,7 @@
    semana, marca de pago y nota. */
 
 import { useState } from 'react';
-import { PAY, WEEKDAY_SHORT, WEEK_ORDER, addDays, colones, fromISODate, matchClient, type PayState, type Recurring } from '@dc/core';
+import { PAY, WEEKDAY_SHORT, WEEK_ORDER, addDays, colones, fromISODate, matchClient, priceOn, type PayState, type Recurring } from '@dc/core';
 import { PayMark, Sheet, Stepper, cartLines, useToast, type Cart } from '@dc/ui';
 import { now as nowIso, saveOrder, saveRecurring, today, updateOrder, useStore } from '../store';
 import { HelpDot } from '../HelpDot';
@@ -16,6 +16,16 @@ export interface OrderDraft {
   note?: string;
   weekly?: boolean;
   amountOverride?: number;
+  discount?: number;
+  paidAmount?: number;
+}
+
+/** "1000" → ₡1.000 · "10%" → el 10 % del subtotal */
+export function readDiscount(text: string, subtotal: number) {
+  const t = text.replace(/\s/g, '');
+  if (!t) return 0;
+  if (t.endsWith('%')) return Math.round(subtotal * Math.min(100, Number(t.slice(0, -1).replace(',', '.')) || 0) / 100);
+  return Math.min(subtotal, Number(t.replace(/\D/g, '')) || 0);
 }
 
 export function OrderSheet({ initial, editId, onCart, onClose, onDone }: {
@@ -41,12 +51,21 @@ export function OrderSheet({ initial, editId, onCart, onClose, onDone }: {
   const [days, setDays] = useState<number[]>(initial.weekly ? [fromISODate(initial.date ?? now).getDay()] : []);
   const [override, setOverride] = useState(initial.amountOverride);
   const [adding, setAdding] = useState(false);
+  const [discText, setDiscText] = useState(initial.discount ? String(initial.discount) : '');
+  const [paidText, setPaidText] = useState(initial.paidAmount ? String(initial.paidAmount) : '');
 
   const setCart = (c: Cart) => { setCartState(c); setOverride(undefined); onCart?.(c); };
   const lines = cartLines(cart, offerings);
   const known = matchClient(client, clients);
   const lineTotal = (id: string, qty: number, price: number) => Math.round(qty * price * (1 - (known?.discounts[id] ?? 0)));
-  const total = override ?? lines.reduce((s, l) => s + lineTotal(l.offering.id, l.qty, l.offering.price), 0);
+  const price = (o: Parameters<typeof priceOn>[0]) => priceOn(o, date);
+  const subtotal = override ?? lines.reduce((s, l) => s + lineTotal(l.offering.id, l.qty, price(l.offering)), 0);
+  const discount = readDiscount(discText, subtotal);
+  const total = Math.max(0, subtotal - discount);
+  const paid = pay === 'pending' ? Math.min(total, Number(paidText.replace(/\D/g, '')) || 0) : 0;
+  // al editar, un valor que se quita se guarda como null para borrarlo también en la nube
+  const clear = (had?: number) => (had ? null : undefined);
+  const extras = { discount: discount || clear(editing?.discount), paidAmount: paid || clear(editing?.paidAmount) };
   const others = offerings.filter(o => o.active && !(cart[o.id] > 0));
   const week = Array.from({ length: 7 }, (_, i) => addDays(now, i));
   const dates = week.includes(date) ? week : [date, ...week];
@@ -64,7 +83,7 @@ export function OrderSheet({ initial, editId, onCart, onClose, onDone }: {
       pay, note: note.trim() || undefined, active: true, skips: [], createdAt: nowIso(),
     });
     if (editing) {
-      saveOrder({ lines, client: client.trim(), date, pay, note: note.trim() || undefined, amountOverride: override }, editing.id);
+      saveOrder({ lines, client: client.trim(), date, pay, note: note.trim() || undefined, amountOverride: override, ...extras }, editing.id);
       const patch: Parameters<typeof updateOrder>[1] = { pay };
       if (weekly && !isFijo) {
         const r = recurring();
@@ -80,7 +99,7 @@ export function OrderSheet({ initial, editId, onCart, onClose, onDone }: {
       toast(`Fijo creado: cada ${weekdays.map(w => WEEKDAY_SHORT[w]).join(', ')}`);
       return onDone(name, date);
     }
-    const o = saveOrder({ lines, client: client.trim(), date, pay, note: note.trim() || undefined, amountOverride: override });
+    const o = saveOrder({ lines, client: client.trim(), date, pay, note: note.trim() || undefined, amountOverride: override, ...extras });
     onDone(o.client, o.date);
   }
 
@@ -93,7 +112,7 @@ export function OrderSheet({ initial, editId, onCart, onClose, onDone }: {
             <li key={l.offering.id}>
               <span>{l.offering.name}{known?.discounts[l.offering.id] ? <em> −{Math.round(known.discounts[l.offering.id] * 100)}%</em> : null}</span>
               <Stepper value={l.qty} onChange={n => setCart({ ...cart, [l.offering.id]: n })} name={l.offering.name} />
-              <b>{colones(lineTotal(l.offering.id, l.qty, l.offering.price))}</b>
+              <b>{colones(lineTotal(l.offering.id, l.qty, price(l.offering)))}{price(l.offering) !== l.offering.price && <small className="promo"> a {colones(price(l.offering))}</small>}</b>
             </li>
           ))}
         </ul>
@@ -138,12 +157,28 @@ export function OrderSheet({ initial, editId, onCart, onClose, onDone }: {
             </>
           )}
         </div>
+        {!(weekly && !editing) && (
+          <label className="field wide">Descuento de esta vez
+            <span className="row money-row">
+              <input inputMode="decimal" value={discText} onChange={e => setDiscText(e.target.value)} placeholder="₡ o %, ej. 1000 o 10%" />
+              {discount > 0 && <b className="minus">−{colones(discount)}</b>}
+            </span>
+          </label>
+        )}
         <div className="field wide pay-row"><span>Pago <HelpDot topic="pago" label="Marca de pago" /></span>
           <span><PayMark state={pay} size={34} onChange={setPay} /> {PAY[pay].label}</span>
         </div>
+        {pay === 'pending' && !(weekly && !editing) && (
+          <label className="field wide">Abonó (pagó una parte)
+            <span className="row money-row">
+              <input inputMode="numeric" value={paidText} onChange={e => setPaidText(e.target.value)} placeholder="₡ que ya pagó" />
+              {paid > 0 && <b className="minus">debe {colones(total - paid)}</b>}
+            </span>
+          </label>
+        )}
         <label className="field wide">Nota<input value={note} onChange={e => setNote(e.target.value)} placeholder="Opcional" /></label>
         <div className="checkout-foot">
-          <span>Total <b>{colones(total)}</b>{override != null && <small className="muted"> (precio escrito)</small>}</span>
+          <span>Total <b>{colones(total)}</b>{discount > 0 ? <small className="muted"> antes {colones(subtotal)}</small> : override != null && <small className="muted"> (precio escrito)</small>}</span>
           <button className="shop-go">{editing ? 'Guardar' : weekly ? 'Crear fijo' : 'Anotar venta'}</button>
         </div>
       </form>

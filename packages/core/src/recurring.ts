@@ -4,7 +4,7 @@
 
 import type { Client, Offering, Order, Recurring } from './types';
 import { addDays, fromISODate } from './dates';
-import { lineTotal } from './money';
+import { lineTotal, priceOn } from './money';
 
 export const WEEKDAY_SHORT = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
 /** Orden de la semana para mostrar: lunes primero. */
@@ -24,12 +24,12 @@ export function occursOn(r: Recurring, date: string): boolean {
   return true;
 }
 
-export function recurringLines(r: Recurring, offerings: Offering[], client?: Client) {
+export function recurringLines(r: Recurring, offerings: Offering[], client?: Client, date = new Date().toISOString().slice(0, 10)) {
   return r.items.flatMap(it => {
     const o = offerings.find(x => x.id === it.offeringId);
     if (!o || it.qty <= 0) return [];
     const discount = client?.discounts[o.id];
-    return [{ offeringId: o.id, code: o.code, name: o.name, qty: it.qty, unitPrice: o.price, ...(discount ? { discount } : {}) }];
+    return [{ offeringId: o.id, code: o.code, name: o.name, qty: it.qty, unitPrice: priceOn(o, date), ...(discount ? { discount } : {}) }];
   });
 }
 
@@ -51,7 +51,7 @@ export function materialize(args: {
     for (const r of args.recurring) {
       if (!occursOn(r, d) || have.has(`${r.id}|${d}`)) continue;
       const client = args.clients.find(c => c.id === r.clientId);
-      const items = recurringLines(r, args.offerings, client);
+      const items = recurringLines(r, args.offerings, client, d);
       if (!items.length) continue;
       out.push({
         id: args.newId(), client: r.client, clientId: r.clientId, recurringId: r.id, date: d, items,

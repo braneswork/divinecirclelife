@@ -4,7 +4,7 @@
 
 import { useRef, useState } from 'react';
 import {
-  INVOICE_SEQ_START, MESES, buildInvoice, pillarOf, colones, invoiceLines, invoiceTotals, invoiceableOrders, monthOf, orderTotal,
+  INVOICE_SEQ_START, MESES, buildInvoice, pillarOf, colones, invoiceLines, invoiceTotals, invoiceableOrders, monthOf, orderDue, orderTotal,
   type Client, type Invoice,
 } from '@dc/core';
 import { Bubble, Focus, Icon, Photo, Sheet, Stage, Timeline, Track, ViewToggle, Zoom, around, hexCells, originOf, useToast, useViewMode, type Origin, type TimelineItem } from '@dc/ui';
@@ -35,7 +35,7 @@ export function Clientes() {
   const [archived, setArchived] = useState(false);
   const nArchived = clients.filter(c => !c.active).length;
   const list = clients.filter(c => (archived ? !c.active : c.active)).sort((a, b) => Number(b.billing === 'mensual') - Number(a.billing === 'mensual') || a.name.localeCompare(b.name));
-  const owed = (c: Client) => orders.filter(o => o.clientId === c.id && o.status !== 'cancelado' && o.pay === 'pending').reduce((s, o) => s + orderTotal(o), 0);
+  const owed = (c: Client) => orders.filter(o => o.clientId === c.id && o.status !== 'cancelado' && o.pay === 'pending').reduce((s, o) => s + orderDue(o), 0);
   const thisMonth = (c: Client) => orders.filter(o => o.clientId === c.id && o.status !== 'cancelado' && monthOf(o.date) === period).reduce((s, o) => s + orderTotal(o), 0);
   const totalOwed = list.reduce((s, c) => s + owed(c), 0);
   // panal uniforme: núcleo al centro, clientes alrededor y el "+" al final

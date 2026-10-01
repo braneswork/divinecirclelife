@@ -54,6 +54,16 @@ export function nextInvoiceNumber(invoices: Invoice[], start = 0): string {
   return String(max + 1).padStart(4, '0');
 }
 
+/** Descuentos de una vez y abonos de los pedidos del mes, como ajustes de la factura. */
+export function autoAdjustments(orders: Order[]): InvoiceAdjustment[] {
+  const discount = orders.reduce((s, o) => s + (o.discount ?? 0), 0);
+  const paid = orders.reduce((s, o) => s + (o.pay === 'pending' ? o.paidAmount ?? 0 : 0), 0);
+  return [
+    ...(discount ? [{ label: 'Descuentos', amount: -discount }] : []),
+    ...(paid ? [{ label: 'Abonos', amount: -paid }] : []),
+  ];
+}
+
 export function buildInvoice(args: {
   id: string; client: Client; period: string; date: string; orders: Order[];
   invoices: Invoice[]; adjustments?: InvoiceAdjustment[]; seqStart?: number; now: string;
@@ -66,7 +76,7 @@ export function buildInvoice(args: {
     period: args.period,
     date: args.date,
     lines: invoiceLines(args.orders),
-    adjustments: args.adjustments ?? [],
+    adjustments: [...autoAdjustments(args.orders), ...(args.adjustments ?? [])],
     orderIds: args.orders.map(o => o.id),
     status: 'abierta',
     createdAt: args.now,

@@ -110,7 +110,7 @@ Proyecto de Supabase: `vbeubyipzzpfbdjswavh` (URL y clave anon pública en
   Permissions-Policy, COOP.
 
 ### Configuración en Supabase (una vez)
-1. SQL Editor: `supabase/setup.sql` y luego `supabase/seguridad.sql`.
+1. SQL Editor: `supabase/setup.sql`, `supabase/seguridad.sql`, `supabase/fijos.sql` y `supabase/precios.sql`, en ese orden.
 2. (Opcional, requiere SMTP propio: Authentication → Emails → Set up SMTP, p. ej. Resend)
    Plantilla **Magic link or OTP** con el código `{{ .Token }}` y el enlace `{{ .ConfirmationURL }}`.
    Sin SMTP propio se usa el enlace (el correo de Supabase tiene un límite bajo de envíos por hora).

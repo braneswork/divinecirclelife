@@ -11,8 +11,12 @@ type Row = Record<string, unknown>;
 const snake = (k: string) => k.replace(/[A-Z]/g, c => '_' + c.toLowerCase());
 const camel = (k: string) => k.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase());
 
+// columnas de supabase/precios.sql: si no tienen valor no se mandan, así el hub
+// sigue sincronizando aunque ese SQL todavía no se haya corrido (para borrar
+// un valor se guarda null)
+const OPTIONAL = new Set(['discount', 'paidAmount', 'promoPrice', 'promoUntil']);
 const toRow = (obj: object): Row =>
-  Object.fromEntries(Object.entries(obj).map(([k, v]) => [snake(k), v ?? null]));
+  Object.fromEntries(Object.entries(obj).filter(([k, v]) => !(OPTIONAL.has(k) && v === undefined)).map(([k, v]) => [snake(k), v ?? null]));
 const fromRow = <T>(row: Row): T =>
   Object.fromEntries(Object.entries(row).filter(([, v]) => v !== null).map(([k, v]) => [camel(k), v])) as T;
 

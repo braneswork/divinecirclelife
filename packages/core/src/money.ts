@@ -1,4 +1,4 @@
-import type { Order, PayState } from './types';
+import type { Offering, Order, PayState } from './types';
 
 const fmt = new Intl.NumberFormat('es-CR', { maximumFractionDigits: 0 });
 
@@ -10,8 +10,25 @@ export const lineTotal = (it: Order["items"][number]) => Math.round(it.qty * it.
 export const itemsTotal = (o: Pick<Order, 'items'>) =>
   o.items.reduce((s, it) => s + lineTotal(it), 0);
 
-export const orderTotal = (o: Pick<Order, 'items' | 'amountOverride'>) =>
-  o.amountOverride ?? itemsTotal(o);
+/** Total a cobrar: la suma de las líneas (o el monto acordado) menos el descuento de esta vez. */
+export const orderTotal = (o: Pick<Order, 'items' | 'amountOverride' | 'discount'>) =>
+  Math.max(0, (o.amountOverride ?? itemsTotal(o)) - (o.discount ?? 0));
+
+/** Lo que ya entró de una venta: todo si está ✓, el abono si está ✕, nada si es crédito. */
+export function orderPaid(o: Pick<Order, 'items' | 'amountOverride' | 'discount' | 'pay' | 'paidAmount'>) {
+  const t = orderTotal(o);
+  return o.pay === 'paid' ? t : o.pay === 'pending' ? Math.min(t, o.paidAmount ?? 0) : 0;
+}
+
+/** Lo que falta cobrar de una venta ✕ (el total menos su abono). */
+export function orderDue(o: Pick<Order, 'items' | 'amountOverride' | 'discount' | 'pay' | 'paidAmount'>) {
+  return o.pay === 'pending' ? orderTotal(o) - orderPaid(o) : 0;
+}
+
+/** El precio de una oferta para un día: el especial mientras dure, si no el normal. */
+export function priceOn(o: Pick<Offering, 'price' | 'promoPrice' | 'promoUntil'>, date: string) {
+  return o.promoPrice != null && o.promoUntil && date <= o.promoUntil ? o.promoPrice : o.price;
+}
 
 /** Totales por estado de pago (sin cancelados). */
 export function payTotals(orders: Order[]) {
@@ -20,7 +37,8 @@ export function payTotals(orders: Order[]) {
     if (o.status === 'cancelado') continue;
     const v = orderTotal(o);
     t.total += v;
-    t[o.pay] += v;
+    if (o.pay === 'credit') t.credit += v;
+    else { t.paid += orderPaid(o); t.pending += orderDue(o); }
   }
   return t;
 }

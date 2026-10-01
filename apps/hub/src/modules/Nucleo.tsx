@@ -6,10 +6,13 @@ import { useRef, useState, type CSSProperties } from 'react';
 import {
   ALL_PILLARS, CATEGORIES, colones, monthOf, monthRange, offeringStats, pillarOf,
   type Offering, type OfferingKind,
+  MESES, priceOn,
 } from '@dc/core';
 import { Bubble, Icon, Photo, Sheet, Stage, Track, Zoom, around, hexCells, originOf, shrinkImage, useToast, type Origin } from '@dc/ui';
 import { today, upsertOffering, useStore } from '../store';
 import { monthName, shiftMonth } from './Clientes';
+
+const shortDate = (iso: string) => `${Number(iso.slice(8, 10))} ${MESES[Number(iso.slice(5, 7)) - 1].slice(0, 3)}`;
 
 const cleanCode = (s: string) => s.toUpperCase().replace(/[^A-Z0-9Ñ]/g, '');
 
@@ -52,7 +55,7 @@ function Nucleo({ kind, title }: { kind: OfferingKind; title: string }) {
               <Photo src={o.image} name={o.name} tone={tone} />
               <span className="label">
                 <strong>{o.name}</strong>
-                <span className="small">{st ? colones(st.revenue) : colones(o.price)}</span>
+                <span className="small">{st ? colones(st.revenue) : colones(priceOn(o, today()))}</span>
               </span>
             </Bubble>
           );
@@ -85,7 +88,9 @@ function OfferingPage({ id, onBack }: { id: string; onBack: () => void }) {
   const pillar = pillarOf(o.pillar);
 
   const facts: { label: string; value: string }[] = [
-    { label: 'precio', value: colones(o.price) },
+    priceOn(o, today()) !== o.price
+      ? { label: `hasta ${shortDate(o.promoUntil!)}`, value: colones(priceOn(o, today())) }
+      : { label: 'precio', value: colones(o.price) },
     { label: 'generó', value: colones(st?.revenue ?? 0) },
     { label: o.kind === 'producto' ? 'unidades' : 'cupos', value: String(st?.units ?? 0) },
     { label: 'pedidos', value: String(st?.orders ?? 0) },
@@ -152,7 +157,14 @@ export function OfferingSheet({ kind, offering, onClose }: { kind: OfferingKind;
     if (!d.name.trim()) return toast('Falta el nombre');
     if (!code || /^\d/.test(code)) return toast('El código empieza con letra (es lo que se escribe en ventas rápidas)');
     if (offerings.some(o => o.code === code && o.id !== d.id)) return toast(`El código ${code} ya existe`);
-    upsertOffering({ ...d, code, name: d.name.trim(), description: d.description?.trim() || undefined });
+    const promo = d.promoPrice != null && d.promoPrice !== d.price;
+    if (promo && !d.promoUntil) return toast('¿Hasta qué día va el precio especial?');
+    // sin precio especial: si antes tenía, se guarda null para borrarlo también en la nube
+    const gone = (had?: unknown) => (had != null ? (null as never) : undefined);
+    upsertOffering({
+      ...d, code, name: d.name.trim(), description: d.description?.trim() || undefined,
+      promoPrice: promo ? d.promoPrice : gone(offering?.promoPrice), promoUntil: promo ? d.promoUntil : gone(offering?.promoUntil),
+    });
     toast(offering ? 'Ficha guardada' : `${d.name.trim()} agregado`);
     onClose();
   }
@@ -173,6 +185,8 @@ export function OfferingSheet({ kind, offering, onClose }: { kind: OfferingKind;
         <label className="field wide">Nombre<input value={d.name} onChange={e => setD({ ...d, name: e.target.value })} autoFocus={!offering} /></label>
         <label className="field">Código<input className="code" value={d.code} onChange={e => setD({ ...d, code: cleanCode(e.target.value) })} placeholder="C" /></label>
         <label className="field">Precio ₡<input inputMode="numeric" value={d.price || ''} onChange={e => setD({ ...d, price: Number(e.target.value.replace(/\D/g, '')) || 0 })} /></label>
+        <label className="field">Precio especial ₡<input inputMode="numeric" value={d.promoPrice ?? ''} onChange={e => setD({ ...d, promoPrice: e.target.value.replace(/\D/g, '') ? Number(e.target.value.replace(/\D/g, '')) : undefined })} placeholder="opcional" /></label>
+        <label className="field">Hasta el<input type="date" value={d.promoUntil ?? ''} onChange={e => setD({ ...d, promoUntil: e.target.value || undefined })} /></label>
         <label className="field">Presentación<input value={d.unit ?? ''} onChange={e => setD({ ...d, unit: e.target.value })} placeholder="unidad, 800 g, 2 horas" /></label>
         {kind === 'producto' && (
           <label className="field">Familia

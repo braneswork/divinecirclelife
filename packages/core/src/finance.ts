@@ -2,7 +2,7 @@
    cobrado, por cobrar, crédito, salidas y balance de un periodo. */
 
 import type { Expense, Invoice, Offering, Order } from './types';
-import { lineTotal, orderTotal } from './money';
+import { lineTotal, orderDue, orderPaid, orderTotal } from './money';
 import { invoiceTotals } from './billing';
 
 export interface MoneySummary {
@@ -38,9 +38,12 @@ export function summarize(args: {
   for (const o of orders) {
     const v = orderTotal(o);
     ventas += v;
-    if (o.pay === 'paid') cobrado += v;
-    else if (o.pay === 'credit') credito += v;
-    else { porCobrar += v; debt.set(o.client, (debt.get(o.client) ?? 0) + v); }
+    if (o.pay === 'credit') credito += v;
+    else {
+      cobrado += orderPaid(o);
+      const due = orderDue(o);
+      if (due) { porCobrar += due; debt.set(o.client, (debt.get(o.client) ?? 0) + due); }
+    }
     // reparte el total del pedido entre familias en proporción a sus líneas
     const lines = o.items.map(it => ({ it, v: lineTotal(it) }));
     const sum = lines.reduce((s, l) => s + l.v, 0) || 1;

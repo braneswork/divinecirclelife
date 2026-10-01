@@ -3,7 +3,7 @@
    pieza que usará la web. Las dos terminan en la ficha de la venta. */
 
 import { useMemo, useRef, useState } from 'react';
-import { PAY, QUICK_ERRORS, dayLabel, matchClient, parseQuick } from '@dc/core';
+import { PAY, QUICK_ERRORS, dayLabel, matchClient, parseQuick, priceOn } from '@dc/core';
 import { Shop, useToast, type Cart } from '@dc/ui';
 import { today, useStore } from '../store';
 import { useNav } from '../nav';
@@ -21,7 +21,8 @@ export function Entrada() {
   const [draft, setDraft] = useState<(OrderDraft & { shop?: boolean }) | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const parsed = useMemo(() => parseQuick(text, offerings, now), [text, offerings, now]);
-  const active = offerings.filter(o => o.active);
+  // la tienda muestra el precio de hoy (el especial si hay uno vigente)
+  const active = useMemo(() => offerings.filter(o => o.active).map(o => ({ ...o, price: priceOn(o, now) })), [offerings, now]);
 
   const done = (client: string, date: string) =>
     toast(`Anotado: ${client} · ${dayLabel(date, now)}`, { label: 'Ver ventas', run: () => nav.enter('ventas') });

@@ -4,7 +4,7 @@
 
 import { useSyncExternalStore } from 'react';
 import {
-  SEED_CLIENTS, SEED_EXPERIENCES, SEED_OFFERINGS, SEED_PROJECTS, addDays, materialize, matchClient, removableFuture, toISODate,
+  SEED_CLIENTS, SEED_EXPERIENCES, SEED_OFFERINGS, SEED_PROJECTS, addDays, materialize, priceOn, matchClient, removableFuture, toISODate,
   type Client, type Expense, type Invoice, type Offering, type Order, type PayState, type Project, type QuickLine, type Recurring,
 } from '@dc/core';
 import { pushRow, deleteRow, type Table } from './sync';
@@ -94,6 +94,10 @@ export interface NewOrder {
   client: string;
   date: string;
   amountOverride?: number;
+  /** descuento de esta vez (₡); null lo borra */
+  discount?: number | null;
+  /** abono de una venta ✕ (₡); null lo borra */
+  paidAmount?: number | null;
   pay: PayState;
   note?: string;
   /** volverlo pedido fijo semanal (el día de la semana de `date`) */
@@ -112,10 +116,12 @@ export function saveOrder(input: NewOrder, replaceId?: string): Order {
     date: input.date,
     items: input.lines.map(l => ({
       offeringId: l.offering.id, code: l.offering.code, name: l.offering.name,
-      qty: l.qty, unitPrice: l.offering.price,
+      qty: l.qty, unitPrice: priceOn(l.offering, input.date),
       ...(client?.discounts[l.offering.id] ? { discount: client.discounts[l.offering.id] } : {}),
     })),
     amountOverride: input.amountOverride,
+    ...('discount' in input ? { discount: input.discount as number } : prev?.discount != null ? { discount: prev.discount } : {}),
+    ...('paidAmount' in input ? { paidAmount: input.paidAmount as number } : prev?.paidAmount != null ? { paidAmount: prev.paidAmount } : {}),
     status: prev?.status ?? 'pendiente',
     // al editar se conserva la marca de pago salvo que se escriba "pagado" o "credito"
     pay: input.pay !== 'pending' ? input.pay : (prev?.pay ?? 'pending'),

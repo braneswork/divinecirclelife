@@ -174,3 +174,12 @@ export function removeInvoice(inv: Invoice) {
   remove('invoices', inv.id);
   for (const id of inv.orderIds) updateOrder(id, { invoiceId: undefined });
 }
+
+/** Borra todo lo guardado en este dispositivo (al salir). */
+export function clearLocal() {
+  try {
+    for (const k of Object.keys(localStorage)) if (k.startsWith('divine-circle') || k.startsWith('dc-') || k.startsWith('sb-')) localStorage.removeItem(k);
+  } catch { /* sin storage */ }
+  commit({ orders: [], offerings: [...SEED_OFFERINGS, ...SEED_EXPERIENCES], projects: SEED_PROJECTS, clients: SEED_CLIENTS, invoices: [], expenses: [] });
+  try { localStorage.removeItem(KEY); } catch { /* nada */ }
+}

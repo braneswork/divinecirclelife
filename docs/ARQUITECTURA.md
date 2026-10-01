@@ -93,6 +93,31 @@ Proyecto de Supabase: `vbeubyipzzpfbdjswavh` (URL y clave anon pública en
 5. La primera sincronización de cada dispositivo sube lo que ya tenía (fichas, fotos, ventas);
    después la nube manda.
 
+## Seguridad
+
+- **Puerta del hub** (`apps/hub/src/auth/Gate.tsx`): sin sesión no se muestra nada. Acceso por
+  correo con código de 6 dígitos (OTP) o enlace (PKCE). Con sesión pero fuera de `members`:
+  "Sin acceso". Sin señal, se permite seguir si el dispositivo ya tenía sesión y rol.
+- **Salir** sincroniza y borra los datos locales y la sesión del dispositivo.
+- **Base de datos**: RLS en todas las tablas; el público solo ve proyectos activos y ofertas
+  publicadas y crea pedidos únicamente vía `place_web_order()`. El equipo se gestiona solo por
+  funciones (`team`, `set_member`, `remove_member`) que exigen dueño o admin y dejan siempre un
+  dueño; nadie puede insertarse en `members` directamente. `supabase/seguridad.sql` además
+  bloquea las tablas del hub anterior para el público.
+- **Cabeceras** (`vercel.json`): Content-Security-Policy estricta (scripts propios, conexión solo
+  al proyecto de Supabase, sin iframes), HSTS, nosniff, X-Frame-Options DENY, Referrer-Policy,
+  Permissions-Policy, COOP.
+
+### Configuración en Supabase (una vez)
+1. SQL Editor: `supabase/setup.sql` y luego `supabase/seguridad.sql`.
+2. Authentication → Email Templates → **Magic Link**: incluir el código, por ejemplo
+   `<h2>Tu código: {{ .Token }}</h2><p>o entra con <a href="{{ .ConfirmationURL }}">este enlace</a>.</p>`
+3. Authentication → URL Configuration: Site URL = dirección de Vercel; Redirect URLs = esa
+   dirección con `/**` y `https://*.vercel.app/**`.
+4. Entrar al hub (quedas como dueño). Después, Authentication → Sign In / Providers → desactivar
+   **Allow new users to sign up**: desde ahí solo entran personas invitadas (Users → Invite user)
+   y agregadas en Ajustes → Equipo.
+
 ## Publicación (Vercel)
 
 `vercel.json` construye con `npm run build:site` y publica `dist/`:

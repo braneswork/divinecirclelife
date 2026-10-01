@@ -24,7 +24,6 @@ alter table public.expenses enable row level security;
 drop policy if exists "members: cada quien se ve" on public.members;
 create policy "members: cada quien se ve" on public.members for select using (user_id = auth.uid() or public.is_member());
 drop policy if exists "members: admins gestionan" on public.members;
-create policy "members: admins gestionan" on public.members for all using (public.is_admin()) with check (public.is_admin());
 drop policy if exists "projects: publico ve activos" on public.projects;
 create policy "projects: publico ve activos" on public.projects for select using (active or public.is_member());
 drop policy if exists "projects: equipo gestiona" on public.projects;

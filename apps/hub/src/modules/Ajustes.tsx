@@ -1,32 +1,34 @@
-/* Ajustes: el tema y los datos orbitando alrededor del centro. */
+/* Ajustes: el dispositivo al centro; alrededor tema, cuenta, equipo y respaldo. */
 
 import { useEffect, useRef, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
+import { Bubble, Focus, Sheet, Stage, Track, around, useToast } from '@dc/ui';
 import { sb } from '../supabase';
 import { syncNow } from '../cloud';
-import { getState, replaceState, type State } from '../store';
+import { getState, replaceState, useStore, type State } from '../store';
 import { claimRole, syncError } from '../sync';
-import { useToast } from '@dc/ui';
 import { getTheme, setTheme, type Theme } from '../theme';
-import { Bubble, Focus, Stage, Track, around } from '@dc/ui';
+import { signOutAndClear } from '../auth/session';
+import { HelpDot } from '../HelpDot';
+
+const ROLE_LABEL: Record<string, string> = { owner: 'dueño', admin: 'admin', staff: 'equipo' };
 
 export function Ajustes() {
   const toast = useToast();
+  const orders = useStore(s => s.orders.length);
   const [theme, setThemeState] = useState<Theme>(getTheme);
   const [session, setSession] = useState<Session | null>(null);
-  const [cloud, setCloud] = useState(false);
-  const [email, setEmail] = useState('');
   const [role, setRole] = useState('');
+  const [panel, setPanel] = useState<'cuenta' | 'equipo' | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!sb) return;
-    sb.auth.getSession().then(({ data }) => setSession(data.session));
-    const { data } = sb.auth.onAuthStateChange((_e, s) => { setSession(s); if (s) void claimRole().then(setRole); });
-    return () => data.subscription.unsubscribe();
+    sb?.auth.getSession().then(({ data }) => setSession(data.session));
+    void claimRole().then(setRole);
   }, []);
 
   const pickTheme = (t: Theme) => { setTheme(t); setThemeState(t); };
+  const isAdmin = role === 'owner' || role === 'admin';
 
   function exportJson() {
     const a = document.createElement('a');
@@ -52,7 +54,8 @@ export function Ajustes() {
     { key: 'auto', label: 'automático', on: theme === 'auto', run: () => pickTheme('auto') },
     { key: 'light', label: 'claro', on: theme === 'light', run: () => pickTheme('light') },
     { key: 'dark', label: 'oscuro', on: theme === 'dark', run: () => pickTheme('dark') },
-    { key: 'cloud', label: session ? 'nube ✓' : 'nube', on: !!session, run: () => setCloud(true) },
+    { key: 'cuenta', label: 'cuenta', on: false, run: () => setPanel('cuenta') },
+    ...(isAdmin ? [{ key: 'equipo', label: 'equipo', on: false, run: () => setPanel('equipo') }] : []),
     { key: 'down', label: 'descargar respaldo', on: false, run: exportJson },
     { key: 'up', label: 'cargar respaldo', on: false, run: () => fileRef.current?.click() },
   ];
@@ -62,54 +65,96 @@ export function Ajustes() {
       <Stage>
         <Track r={36} dashed />
         <Bubble d={34} className="core">
-          <span className="eyebrow">Este dispositivo</span>
-          <strong className="big">{getState().orders.length}</strong>
-          <span className="small">pedidos</span>
-          <span className="small">{session ? 'en la nube' : 'solo aquí'}</span>
+          <span className="eyebrow">{ROLE_LABEL[role] ?? 'cuenta'}</span>
+          <strong className="small">{session?.user.email}</strong>
+          <strong className="big">{orders}</strong>
+          <span className="small">ventas en este dispositivo</span>
         </Bubble>
         {items.map((it, i) => (
-          <Bubble key={it.key} at={around(i, items.length, 36)} d={22} className={'setting' + (it.on ? ' on' : '')} onClick={it.run}>
+          <Bubble key={it.key} at={around(i, items.length, 36)} d={21} className={'setting' + (it.on ? ' on' : '')} onClick={it.run}>
             <span>{it.label}</span>
           </Bubble>
         ))}
       </Stage>
       <input ref={fileRef} type="file" accept="application/json" hidden onChange={e => e.target.files?.[0] && importJson(e.target.files[0])} />
 
-      {cloud && (
+      {panel === 'cuenta' && (
         <Focus
-          onClose={() => setCloud(false)}
+          onClose={() => setPanel(null)}
           center={
-            !sb ? (
-              <>
-                <span className="eyebrow">Nube</span>
-                <span className="small">Todo se guarda en este dispositivo. Al crear el Supabase nuevo se configura <code>VITE_SUPABASE_URL</code> y <code>VITE_SUPABASE_ANON_KEY</code>.</span>
-              </>
-            ) : session ? (
-              <>
-                <span className="eyebrow">Conectado</span>
-                <strong className="small">{session.user.email}</strong>
-                <span className={'small ' + (role === 'sin acceso' || role === 'error' ? 'warn' : 'ok')}>
-                  {role === 'owner' ? 'dueño' : role === 'admin' ? 'admin' : role === 'staff' ? 'equipo' : role === 'sin acceso' ? 'sin acceso: pide al dueño que te agregue' : role === 'error' ? syncError() : '…'}
-                </span>
-              </>
-            ) : (
-              <form className="circle-form" onSubmit={async e => {
-                e.preventDefault();
-                const { error } = await sb!.auth.signInWithOtp({ email, options: { emailRedirectTo: location.href } });
-                toast(error ? error.message : 'Revisa tu correo para entrar');
-              }}>
-                <span className="eyebrow">Entrar</span>
-                <input type="email" required placeholder="tu@correo.com" value={email} onChange={e => setEmail(e.target.value)} />
-                <button className="btn-inline">enviar enlace</button>
-              </form>
-            )
+            <>
+              <span className="eyebrow">Sesión</span>
+              <strong className="small">{session?.user.email}</strong>
+              <span className="small ok">{ROLE_LABEL[role] ?? role}</span>
+              <span className="small">Salir sube lo pendiente y borra los datos de este dispositivo.</span>
+            </>
           }
-          actions={session ? [
+          actions={[
             { label: 'sincronizar', onClick: async () => toast((await syncNow()) ? 'Sincronizado' : syncError() || 'No se pudo sincronizar'), tone: 'on' },
-            { label: 'salir', onClick: () => sb!.auth.signOut(), tone: 'bad' },
-          ] : []}
+            { label: 'salir', onClick: () => void signOutAndClear(true), tone: 'bad' },
+          ]}
         />
       )}
+      {panel === 'equipo' && <Team myRole={role} me={session?.user.id} onClose={() => setPanel(null)} />}
     </>
+  );
+}
+
+interface Member { user_id: string; email: string; role: string }
+
+function Team({ myRole, me, onClose }: { myRole: string; me?: string; onClose: () => void }) {
+  const toast = useToast();
+  const [list, setList] = useState<Member[]>([]);
+  const [email, setEmail] = useState('');
+  const [role, setRole] = useState('staff');
+
+  const load = async () => {
+    const { data, error } = await sb!.rpc('team');
+    if (error) toast('No se pudo cargar el equipo'); else setList(data as Member[]);
+  };
+  useEffect(() => { void load(); }, []);
+
+  async function add(e: React.FormEvent) {
+    e.preventDefault();
+    const { data, error } = await sb!.rpc('set_member', { p_email: email, p_role: role });
+    if (error) return toast(error.message);
+    if (data === 'sin cuenta') return toast('Esa persona aún no tiene cuenta: invítala en Supabase → Authentication → Users → Invite user, y después la agregas aquí.');
+    setEmail(''); toast('Agregado al equipo'); void load();
+  }
+
+  async function change(m: Member, r: string) {
+    const { error } = await sb!.rpc('set_member', { p_email: m.email, p_role: r });
+    if (error) toast(error.message); else void load();
+  }
+
+  async function remove(m: Member) {
+    if (!confirm(`¿Quitar a ${m.email} del equipo?`)) return;
+    const { error } = await sb!.rpc('remove_member', { p_user: m.user_id });
+    if (error) toast(error.message); else void load();
+  }
+
+  const roles = myRole === 'owner' ? ['owner', 'admin', 'staff'] : ['admin', 'staff'];
+  return (
+    <Sheet onClose={onClose} label="Equipo" className="team-sheet">
+      <h2>Equipo <HelpDot topic="equipo" label="Equipo y acceso" /></h2>
+      <ul className="team">
+        {list.map(m => (
+          <li key={m.user_id}>
+            <span>{m.email}{m.user_id === me ? ' (tú)' : ''}</span>
+            <select value={m.role} onChange={e => change(m, e.target.value)} disabled={m.role === 'owner' && myRole !== 'owner'} aria-label={`Rol de ${m.email}`}>
+              {(m.role === 'owner' && myRole !== 'owner' ? ['owner'] : roles).map(r => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
+            </select>
+            <button className="link" onClick={() => remove(m)} disabled={m.role === 'owner' && myRole !== 'owner'}>quitar</button>
+          </li>
+        ))}
+      </ul>
+      <form className="team-add" onSubmit={add}>
+        <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="correo@persona.com" aria-label="Correo de la persona" />
+        <select value={role} onChange={e => setRole(e.target.value)} aria-label="Rol">
+          {roles.map(r => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
+        </select>
+        <button className="btn-inline">Agregar</button>
+      </form>
+    </Sheet>
   );
 }

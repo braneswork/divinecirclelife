@@ -19,7 +19,7 @@ export function Ajustes() {
   const [theme, setThemeState] = useState<Theme>(getTheme);
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState('');
-  const [panel, setPanel] = useState<'cuenta' | 'equipo' | null>(null);
+  const [panel, setPanel] = useState<'cuenta' | 'equipo' | 'clave' | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -91,10 +91,12 @@ export function Ajustes() {
           }
           actions={[
             { label: 'sincronizar', onClick: async () => toast((await syncNow()) ? 'Sincronizado' : syncError() || 'No se pudo sincronizar'), tone: 'on' },
+            { label: 'contraseña', onClick: () => setPanel('clave') },
             { label: 'salir', onClick: () => void signOutAndClear(true), tone: 'bad' },
           ]}
         />
       )}
+      {panel === 'clave' && <PasswordSheet onClose={() => setPanel(null)} />}
       {panel === 'equipo' && <Team myRole={role} me={session?.user.id} onClose={() => setPanel(null)} />}
     </>
   );
@@ -154,6 +156,36 @@ function Team({ myRole, me, onClose }: { myRole: string; me?: string; onClose: (
           {roles.map(r => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
         </select>
         <button className="btn-inline">Agregar</button>
+      </form>
+    </Sheet>
+  );
+}
+
+/** Crear o cambiar la contraseña (mínimo 10 caracteres, con letras y números). */
+function PasswordSheet({ onClose }: { onClose: () => void }) {
+  const toast = useToast();
+  const [a, setA] = useState('');
+  const [b, setB] = useState('');
+  const strong = a.length >= 10 && /[A-Za-z]/.test(a) && /\d/.test(a);
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    if (!strong) return toast('Mínimo 10 caracteres, con letras y números');
+    if (a !== b) return toast('Las dos contraseñas no coinciden');
+    const { error } = await sb!.auth.updateUser({ password: a });
+    if (error) return toast(/reauth|recent/i.test(error.message) ? 'Por seguridad, sal y vuelve a entrar con el enlace antes de cambiarla.' : error.message);
+    toast('Contraseña guardada. Desde ahora puedes entrar con ella.');
+    onClose();
+  }
+
+  return (
+    <Sheet onClose={onClose} label="Contraseña" className="team-sheet">
+      <h2>Contraseña</h2>
+      <form className="ficha" onSubmit={save}>
+        <label className="field wide">Nueva contraseña<input type="password" autoComplete="new-password" value={a} onChange={e => setA(e.target.value)} autoFocus /></label>
+        <label className="field wide">Repetir<input type="password" autoComplete="new-password" value={b} onChange={e => setB(e.target.value)} /></label>
+        <p className={'field wide ' + (strong ? 'ok-text' : 'muted')}>Mínimo 10 caracteres, con letras y números.</p>
+        <div className="field wide row end"><button type="button" className="btn-inline ghost" onClick={onClose}>Cancelar</button><button className="btn-inline">Guardar</button></div>
       </form>
     </Sheet>
   );

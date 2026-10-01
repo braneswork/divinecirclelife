@@ -274,3 +274,12 @@ code { font-size: .85em; word-break: break-all; }
 }
 .team-add { display: flex; gap: 6px; flex-wrap: wrap; }
 .team-add input { flex: 1 1 200px; min-width: 0; }
+
+.gate-tabs { display: inline-flex; border: 1.5px solid var(--line); border-radius: 999px; padding: 3px; }
+.gate-tabs button { border: 0; background: none; color: var(--muted); padding: 7px 14px; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.gate-tabs button.on { background: var(--accent); color: var(--bg); }
+.gate-form input[type=password] {
+  width: 100%; border: 1.5px solid var(--line); background: var(--card); color: var(--fg); border-radius: 999px;
+  padding: 13px 18px; font: inherit; font-size: 16px; text-align: center;
+}
+.small-note { font-size: 12.5px !important; }

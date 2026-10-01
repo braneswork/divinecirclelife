@@ -21,6 +21,7 @@ el logo de arriba (o la flecha, o Escape) te devuelve al centro. Abajo, cada íc
 - Cada círculo muestra un dato rápido: por entregar, lo generado este mes, lo que falta cobrar, el balance.
 - Abajo a la derecha **+ entrada**: anotar una venta. Abajo a la izquierda **− salida**: anotar un gasto.
 - Los puntos dorados del anillo exterior son proyectos del ecosistema Branes.
+- Debajo de la flor, **el parte de mar**: swell, viento, marea, clima y atardecer de ahora mismo. Tocarlo abre la página Mar.
 
 ### Nueva entrada (+) {#entrada}
 - Arriba, la venta rápida: escribe y presiona Enter, por ejemplo `2C 1MS Soleida`.
@@ -73,6 +74,14 @@ el logo de arriba (o la flecha, o Escape) te devuelve al centro. Abajo, cada íc
 ### Experiencias {#experiencias}
 - Igual que Productos, para el catálogo de experiencias: surf con Take Off, baking, arte, música, talleres…
 - Cada una lleva el color de su pilar. Las reservas desde la web llegan en la próxima etapa.
+
+### Mar {#mar}
+- El parte del spot elegido (Santa Teresa, Playa Hermosa, Playa Carmen o Manzanillo) para programar clases. Se actualiza solo cada hora; **actualizar** lo trae de nuevo.
+- **Swell**: altura en metros, período en segundos y de dónde viene.
+- **Viento** en nudos: verde si es **offshore** (sopla de tierra hacia el mar, limpia la ola), rojo si es **onshore** o cruzado fuerte.
+- **Marea**: la curva del día con las horas de alta y baja; la línea dorada es ahora. ↑ sube, ↓ baja.
+- **Buenas horas para clases**: de día, swell entre 0.5 y 2 m y viento offshore o flojo (6 nudos o menos). Es una guía: siempre mirar el mar antes.
+- Datos de Open-Meteo (pronóstico, no medición en la playa).
 
 ### Clientes {#clientes}
 - Panal con los clientes. Borde dorado: cobro mensual con factura. Cada uno muestra lo del mes o lo que debe.

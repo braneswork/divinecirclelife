@@ -7,6 +7,7 @@ import { bakeSummary, colones, dayLabel, monthOf, monthRange, offeringStats, sum
 import { Bubble, Icon, Stage, Track, around } from '@dc/ui';
 import { today, useStore } from '../store';
 import { MODULES, type ModuleId } from './index';
+import { SeaStrip } from './SeaStrip';
 
 export function Home({ onEnter }: { onEnter: (id: ModuleId, el: Element) => void }) {
   const s = useStore(x => x);
@@ -30,6 +31,7 @@ export function Home({ onEnter }: { onEnter: (id: ModuleId, el: Element) => void
   };
 
   return (
+    <>
     <Stage className="home">
       <Track r={47} dashed />
       {ring.map((p, i) => (
@@ -57,5 +59,7 @@ export function Home({ onEnter }: { onEnter: (id: ModuleId, el: Element) => void
         <span className="small">entrada</span>
       </Bubble>
     </Stage>
+    <SeaStrip onOpen={el => onEnter('mar', el)} />
+    </>
   );
 }

@@ -5,6 +5,7 @@ import '@dc/ui/ui.css';
 import './hub.css';
 import { ToastProvider } from '@dc/ui';
 import { App } from './App';
+import { Gate } from './auth/Gate';
 import { applyTheme } from './theme';
 
 applyTheme();
@@ -12,7 +13,9 @@ applyTheme();
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ToastProvider>
-      <App />
+      <Gate>
+        <App />
+      </Gate>
     </ToastProvider>
   </StrictMode>,
 );

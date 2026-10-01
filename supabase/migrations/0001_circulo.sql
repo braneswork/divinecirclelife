@@ -155,8 +155,6 @@ alter table public.expenses  enable row level security;
 
 create policy "members: cada quien se ve" on public.members
   for select using (user_id = auth.uid() or public.is_member());
-create policy "members: admins gestionan" on public.members
-  for all using (public.is_admin()) with check (public.is_admin());
 
 create policy "projects: público ve activos" on public.projects
   for select using (active or public.is_member());

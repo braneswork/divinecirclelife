@@ -3,6 +3,13 @@
 Todo en el hub es un círculo con cosas alrededor. Tocar un círculo lo expande y entras en él;
 el logo de arriba (o la flecha, o Escape) te devuelve al centro. Abajo, cada ícono dice a dónde lleva.
 
+### Acceso {#acceso}
+- El hub pide entrar con tu correo. Llega un correo con un **código de 6 dígitos**: escríbelo en los círculos.
+- El correo también trae un enlace; funciona si lo abres en el mismo navegador donde lo pediste. En la app instalada usa el código.
+- Si te equivocas, pide otro código (cada 60 segundos).
+- Si entras con una cuenta que no es del equipo verás **Sin acceso**: pide al dueño que te agregue.
+- Sin señal, el hub sigue funcionando en un dispositivo donde ya habías entrado.
+
 ### Inicio {#inicio}
 - Al centro: las ventas de hoy. Alrededor: Ventas (arriba), Experiencias, Clientes, Caja (abajo), Círculo y Productos.
 - Cada círculo muestra un dato rápido: por entregar, lo generado este mes, lo que falta cobrar, el balance.
@@ -78,5 +85,10 @@ el logo de arriba (o la flecha, o Escape) te devuelve al centro. Abajo, cada íc
 
 ### Ajustes {#ajustes}
 - Tema automático, claro u oscuro.
-- Nube: conexión con Supabase (cuando esté el proyecto nuevo).
+- **Cuenta**: tu correo y rol, sincronizar ahora y **salir**. Salir sube lo pendiente y borra los datos de este dispositivo (útil en equipos compartidos).
 - Respaldo: descargar o cargar todos los datos en un archivo.
+
+### Equipo {#equipo}
+- Solo dueño y admin lo ven. Roles: **dueño** (todo, incluido nombrar otros dueños), **admin** (todo, y agrega o quita equipo), **equipo** (trabaja en el hub, sin gestionar personas).
+- Para agregar a alguien: invítalo en Supabase → Authentication → Users → **Invite user** con su correo; luego aquí escribe el correo, elige el rol y **Agregar**.
+- Siempre queda al menos un dueño.

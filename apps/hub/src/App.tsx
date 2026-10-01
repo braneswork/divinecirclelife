@@ -4,7 +4,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Icon, IconNav, Zoom, originOf, type Origin } from '@dc/ui';
 import logo from '@dc/brand/assets/logo-light.png';
-import { sb } from './supabase';
 import { syncNow } from './cloud';
 import { EXTRA, MODULES, type ModuleId } from './modules';
 import { NavContext } from './nav';
@@ -47,10 +46,8 @@ export function App() {
   }, [leave]);
 
   useEffect(() => {
+    // la puerta (auth/Gate) ya garantizó sesión y equipo: traer y subir lo último
     void syncNow();
-    if (!sb) return;
-    const { data } = sb.auth.onAuthStateChange(e => { if (e === 'SIGNED_IN') void syncNow(); });
-    return () => data.subscription.unsubscribe();
   }, []);
 
   const current = open && !open.closing ? ALL.find(m => m.id === open.id) : undefined;

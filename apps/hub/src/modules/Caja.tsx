@@ -4,8 +4,8 @@
 
 import { useMemo, useState } from 'react';
 import { useNav } from '../nav';
-import { colones, monthOf, monthRange, summarize } from '@dc/core';
-import { Bubble, Focus, Icon, PayMark, Stage, hexCells, useToast } from '@dc/ui';
+import { colones, monthOf, monthRange, orderTotal, summarize } from '@dc/core';
+import { Bubble, Focus, Icon, PayMark, Stage, Timeline, ViewToggle, hexCells, useToast, useViewMode, type TimelineItem } from '@dc/ui';
 import { removeExpense, today, upsertExpense, useStore } from '../store';
 import { monthName, shiftMonth } from './Clientes';
 
@@ -20,6 +20,7 @@ export function Caja() {
   const [period, setPeriod] = useState(monthOf(today()));
   const [focus, setFocus] = useState<Key | null>(null);
   const nav = useNav();
+  const [view, setView] = useViewMode('caja');
   const range = monthRange(period);
   const m = useMemo(() => summarize({ ...s, ...range }), [s, range.from, range.to]);
   const monthExpenses = s.expenses.filter(e => e.date >= range.from && e.date <= range.to).sort((a, b) => b.date.localeCompare(a.date));
@@ -45,6 +46,20 @@ export function Caja() {
         <button onClick={() => setPeriod(shiftMonth(period, 1))} aria-label="Mes siguiente">›</button>
       </div>
 
+      <ViewToggle value={view} onChange={setView} />
+      {view === 'historial' ? (
+        <Timeline today={today()} empty={`Sin movimientos en ${monthName(period)}.`} items={[
+          ...s.orders.filter(o => o.date >= range.from && o.date <= range.to).map((o): TimelineItem => ({
+            id: o.id, date: o.date, mark: o.pay, muted: o.status === 'cancelado',
+            title: o.client, detail: o.items.map(i => `${i.qty} ${i.name}`).join(' · '), amount: orderTotal(o),
+            onClick: () => nav.enter('ventas'),
+          })),
+          ...monthExpenses.map((e): TimelineItem => ({
+            id: e.id, date: e.date, tone: 'var(--bad)', title: `Salida · ${e.type}`, detail: e.note, amount: -e.amount,
+            onClick: () => { if (confirm(`¿Borrar la salida de ${colones(e.amount)} (${e.type})?`)) { removeExpense(e.id); toast('Salida borrada', { label: 'Deshacer', run: () => upsertExpense(e) }); } },
+          })),
+        ]} />
+      ) : (
       <Stage>
         <Bubble d={HEX[0].d} className="core">
           <span className="eyebrow">balance</span>
@@ -60,6 +75,7 @@ export function Caja() {
           </Bubble>
         ))}
       </Stage>
+      )}
 
       {focus && (
         <Focus

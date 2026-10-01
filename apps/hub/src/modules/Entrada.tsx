@@ -43,6 +43,7 @@ export function Entrada() {
         cart={cart}
         onCart={setCart}
         onCheckout={() => setCheckout(true)}
+        filters={false}
         top={
           <div className="quick-top">
             <form className="portal" onSubmit={quick}>

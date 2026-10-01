@@ -319,3 +319,36 @@ button.pay { cursor: pointer; }
 .product-price small { font-weight: 500; color: var(--muted); }
 .product-desc { margin: 0; color: var(--muted); max-width: 42ch; }
 .product-actions { display: flex; gap: 10px; align-items: center; margin-top: 6px; }
+
+/* ============ historial ============ */
+.view-toggle { display: inline-flex; border: 1.5px solid var(--line); border-radius: 999px; padding: 3px; flex: 0 0 auto; }
+.view-toggle button {
+  display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; color: var(--muted);
+  padding: 6px 13px; border-radius: 999px; font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer;
+}
+.view-toggle button.on { background: var(--accent); color: var(--bg); }
+.timeline { width: 100%; max-width: 620px; display: flex; flex-direction: column; gap: 14px; }
+.timeline-empty { color: var(--muted); text-align: center; padding: 30px 0; }
+.timeline-day header {
+  display: flex; justify-content: space-between; align-items: baseline; padding: 0 4px 6px; margin-bottom: 4px;
+  border-bottom: 1px solid var(--line); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--muted);
+}
+.timeline-day header b { color: var(--fg); letter-spacing: 0; font-size: 13px; }
+.timeline-day header b.out { color: var(--bad); }
+.timeline-day ul { list-style: none; margin: 0; padding: 0; position: relative; }
+.timeline-day ul::before { content: ''; position: absolute; left: 15px; top: 6px; bottom: 6px; width: 1.5px; background: var(--line); }
+.timeline-day li.muted { opacity: .45; }
+.timeline-row {
+  width: 100%; display: grid; grid-template-columns: 32px 1fr auto; gap: 10px; align-items: center; text-align: left;
+  border: 0; background: none; color: inherit; font: inherit; padding: 7px 4px; border-radius: 12px;
+}
+button.timeline-row { cursor: pointer; }
+button.timeline-row:hover { background: color-mix(in srgb, var(--card) 70%, transparent); }
+.timeline-node { position: relative; display: grid; place-items: center; z-index: 1; }
+.timeline-node i { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--bg); box-shadow: 0 0 0 1.5px var(--line); }
+.timeline-node .pay { border: 2px solid var(--bg); }
+.timeline-text { min-width: 0; display: flex; flex-direction: column; }
+.timeline-text strong { font-size: 14.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.timeline-text small { font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.timeline-amount { font-weight: 700; font-variant-numeric: tabular-nums; }
+.timeline-amount.out { color: var(--bad); }

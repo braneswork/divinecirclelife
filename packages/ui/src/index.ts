@@ -8,4 +8,5 @@ export * from './icons';
 export * from './photo';
 export * from './sheet';
 export * from './shop';
+export * from './timeline';
 export * from './toast';

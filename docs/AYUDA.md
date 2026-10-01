@@ -33,7 +33,7 @@ el logo de arriba (o la flecha, o Escape) te devuelve al centro. Abajo, cada íc
 - El anillo de colores alrededor del centro es lo que hay que preparar; los círculos de abajo lo detallan (16 BB = 16 Burger Buns).
 - Las ventas del día forman una espiral: la más grande ocupa el círculo más grande.
 - Los días de la semana van arriba; ‹ y › para moverte.
-- Toca una venta para traerla al centro: avanzar estado, cambiar pago, editar, cancelar o borrar (se puede deshacer).
+- Toca una venta para ver su detalle en un panel (abajo en el teléfono, al costado en la computadora): avanzar estado, cambiar pago, editar, cancelar o borrar (se puede deshacer).
 - Estados: por preparar (anillo gris), en proceso (anillo dorado punteado), listo (relleno dorado), entregado (anillo verde).
 - **M** en una venta: el cliente paga mensual; **F**: ya está en una factura.
 
@@ -45,6 +45,15 @@ el logo de arriba (o la flecha, o Escape) te devuelve al centro. Abajo, cada íc
 | `1C Lu pagado // sin semillas` | marca ✓ pagado, con nota |
 | `1C Lu credito` | marca + crédito a favor (si no se escribe nada: ✕ no pagó) |
 | `16BB Mantarraya` | cliente registrado (o su alias, `manta`): aplica su descuento |
+| `16BB Mantarraya @vie semanal` | pedido fijo: se repite cada viernes (también `fijo`) |
+
+### Pedidos fijos (semanales) {#fijos}
+- Un fijo se repite ciertos días de la semana: cada semana o cada 2 semanas.
+- Se crean con `semanal` en la venta rápida, con **↻ semanal** al cerrar una venta en **+** (eligiendo los días), o en Ventas → **Semanal** → **+ Nuevo fijo**.
+- El hub crea solo las ventas de los próximos 14 días. Llevan un **↻**. Cada una se prepara, se cobra y se factura como cualquier venta.
+- Si borras la venta de un día, ese día queda saltado y no vuelve a aparecer. Cancelarla también la deja fuera.
+- **Ventas → Semanal**: la semana de lunes a domingo con las unidades fijas de cada día (toca un día para ver qué preparar), el total por semana y la lista de fijos. Toca uno para cambiar días, productos, pago, fechas, **pausar** o **borrar**. Pausar o cambiar un fijo rehace sus ventas futuras que aún no se tocaron.
+- Desde una venta con ↻, la acción **↻ fijo** abre su fijo.
 
 ### Marca de pago {#pago}
 - **✓** pagado (verde) · **✕** no pagó (rojo) · **+** crédito a favor (magenta; dorado en tema oscuro).
@@ -67,6 +76,7 @@ el logo de arriba (o la flecha, o Escape) te devuelve al centro. Abajo, cada íc
 - Panal con los clientes. Borde dorado: cobro mensual con factura. Cada uno muestra lo del mes o lo que debe.
 - Toca uno para entrar: alrededor, solo los productos que pide o tiene negociados, con su descuento (toca uno para cambiarlo o quitarlo). El **+** suma otro producto a ese cliente.
 - Toca el centro para editar sus datos: contacto, teléfono, dirección, alias (para escribirlo corto en ventas) y forma de cobro.
+- Ahí también: **archivar** (deja de aparecer, se puede reactivar desde «ver archivados») o **borrar**. Un cliente con facturas emitidas no se borra: se archiva, para conservar a quién se facturó. Sus ventas quedan con el nombre.
 - Abajo: **Emitir factura** junta las ventas del mes sin facturar, por producto y con su descuento. Los círculos con número son sus facturas.
 
 ### Factura mensual {#factura}

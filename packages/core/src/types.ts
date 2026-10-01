@@ -72,6 +72,8 @@ export interface Order {
   clientId?: string;
   /** factura mensual que lo incluye */
   invoiceId?: string;
+  /** pedido fijo que lo generó */
+  recurringId?: string;
   /** día de entrega, YYYY-MM-DD */
   date: string;
   items: OrderItem[];
@@ -148,5 +150,26 @@ export interface Expense {
   amount: number;
   note?: string;
   method?: string;
+  createdAt: string;
+}
+
+/** Pedido fijo: se repite ciertos días de la semana (cada 1 o 2 semanas). */
+export interface Recurring {
+  id: string;
+  client: string;
+  clientId?: string;
+  items: { offeringId: string; qty: number }[];
+  /** días de la semana: 0 domingo … 6 sábado */
+  weekdays: number[];
+  /** cada cuántas semanas (1 = semanal, 2 = quincenal) */
+  every: 1 | 2;
+  /** desde qué día rige (YYYY-MM-DD); también ancla la quincena */
+  start: string;
+  until?: string;
+  pay: PayState;
+  note?: string;
+  active: boolean;
+  /** días que no se deben volver a generar (porque se borró esa venta) */
+  skips: string[];
   createdAt: string;
 }

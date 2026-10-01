@@ -288,3 +288,48 @@ code { font-size: .85em; word-break: break-all; }
 .pick-grid button { width: 100%; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; container-type: inline-size; }
 .pick-grid strong { font-size: 13px; }
 .pick-grid small { color: var(--muted); }
+
+/* ---------- pedidos fijos ---------- */
+.fijos { width: 100%; max-width: 620px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.fijos-sum { margin: 0; font-size: 14px; color: var(--muted); }
+.fijos-sum b { color: var(--fg); }
+.week { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+.week-day {
+  width: 46px; height: 46px; border-radius: 50%; border: 1.5px solid var(--line); background: var(--card); color: var(--fg);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.05; cursor: pointer; font: inherit; padding: 0;
+}
+.week-day span { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.week-day b { font-size: 15px; }
+.week-day.has { border-color: color-mix(in srgb, var(--gold) 60%, var(--line)); }
+.week-day.on { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.week-day.on span { color: var(--bg); }
+.week.small .week-day { width: 40px; height: 40px; }
+.fijo-list { list-style: none; margin: 0; padding: 0; width: 100%; display: flex; flex-direction: column; gap: 6px; }
+.fijo-list li.paused { opacity: .5; }
+.fijo-row {
+  width: 100%; display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; text-align: left;
+  border: 1.5px solid var(--line); background: var(--card); color: inherit; font: inherit; padding: 9px 12px; border-radius: 18px; cursor: pointer;
+}
+.fijo-row:hover { border-color: var(--gold); }
+.fijo-days { display: grid; grid-template-columns: repeat(7, 13px); gap: 2px; }
+.fijo-days i { width: 13px; height: 13px; border-radius: 50%; font-size: 8px; font-style: normal; font-weight: 700; display: grid; place-items: center; color: var(--muted); border: 1px solid var(--line); text-transform: uppercase; }
+.fijo-days i.on { background: var(--gold); border-color: var(--gold); color: #1A0718; }
+.fijo-text { min-width: 0; display: flex; flex-direction: column; }
+.fijo-text strong { font-size: 14.5px; }
+.fijo-text small { font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fijo-amount { font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+.fijo-amount small { display: block; font-weight: 500; font-size: 11px; color: var(--muted); }
+.fijo-products { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; text-transform: none; letter-spacing: 0; }
+.fijo-products li { display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: center; color: var(--fg); font-weight: 500; font-size: 14px; }
+.fijo-products li.in .fp-name { font-weight: 700; }
+.fp-photo { width: 34px; container-type: inline-size; }
+.fp-photo .photo.placeholder b { font-size: 12px; }
+.fp-photo svg { display: none; }
+.chip { border: 1.5px solid var(--line); background: var(--card); color: var(--fg); border-radius: 999px; padding: 6px 13px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; text-transform: none; letter-spacing: 0; }
+.chip.on { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.rep-tag {
+  position: absolute; bottom: -3%; right: 6%; width: 18px; height: 18px; border-radius: 50%; background: var(--card); border: 1.5px solid var(--gold);
+  color: var(--gold); font-size: 11px; font-style: normal; font-weight: 800; display: grid; place-items: center;
+}
+
+.hidden-add { visibility: hidden; }

@@ -55,7 +55,7 @@ export function Timeline({ items, today, empty = 'Sin movimientos.' }: { items: 
   );
 }
 
-export type ViewMode = 'circulo' | 'historial';
+export type ViewMode = 'circulo' | 'historial' | 'semanal';
 
 /** Interruptor Círculo / Historial, recordado por pantalla en este dispositivo. */
 export function useViewMode(key: string): [ViewMode, (v: ViewMode) => void] {
@@ -65,15 +65,20 @@ export function useViewMode(key: string): [ViewMode, (v: ViewMode) => void] {
   return [v, setV];
 }
 
-export function ViewToggle({ value, onChange }: { value: ViewMode; onChange: (v: ViewMode) => void }) {
+const VIEW_LABEL: Record<ViewMode, { label: string; icon: string }> = {
+  circulo: { label: 'Círculo', icon: 'circulo' },
+  historial: { label: 'Historial', icon: 'lista' },
+  semanal: { label: 'Semanal', icon: 'repetir' },
+};
+
+export function ViewToggle({ value, onChange, options = ['circulo', 'historial'] }: { value: ViewMode; onChange: (v: ViewMode) => void; options?: ViewMode[] }) {
   return (
     <div className="view-toggle" role="tablist" aria-label="Vista">
-      <button role="tab" aria-selected={value === 'circulo'} className={value === 'circulo' ? 'on' : ''} onClick={() => onChange('circulo')}>
-        <Icon name="circulo" size={16} /> Círculo
-      </button>
-      <button role="tab" aria-selected={value === 'historial'} className={value === 'historial' ? 'on' : ''} onClick={() => onChange('historial')}>
-        <Icon name="lista" size={16} /> Historial
-      </button>
+      {options.map(v => (
+        <button key={v} role="tab" aria-selected={value === v} className={value === v ? 'on' : ''} onClick={() => onChange(v)}>
+          <Icon name={VIEW_LABEL[v].icon} size={16} /> {VIEW_LABEL[v].label}
+        </button>
+      ))}
     </div>
   );
 }

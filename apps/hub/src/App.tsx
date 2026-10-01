@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Icon, IconNav, Zoom, originOf, type Origin } from '@dc/ui';
 import logo from '@dc/brand/assets/logo-light.png';
 import { syncNow } from './cloud';
+import { ensureRecurring } from './store';
 import { EXTRA, MODULES, type ModuleId } from './modules';
 import { NavContext } from './nav';
 import { Help } from './Help';
@@ -40,13 +41,14 @@ export function App() {
 
   // Escape vuelve al centro (si no hay un foco abierto, que se cierra primero)
   useEffect(() => {
-    const k = (e: KeyboardEvent) => { if (e.key === 'Escape' && !document.querySelector('.focus, .zoom .zoom, .sheet-overlay')) leave(); };
+    const k = (e: KeyboardEvent) => { if (e.key === 'Escape' && !document.querySelector('.panel-overlay, .zoom .zoom, .sheet-overlay')) leave(); };
     addEventListener('keydown', k);
     return () => removeEventListener('keydown', k);
   }, [leave]);
 
   useEffect(() => {
     // la puerta (auth/Gate) ya garantizó sesión y equipo: traer y subir lo último
+    ensureRecurring();
     void syncNow();
   }, []);
 

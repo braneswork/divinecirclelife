@@ -8,7 +8,7 @@ import {
   type Client, type Invoice,
 } from '@dc/core';
 import { Bubble, Focus, Icon, Photo, Sheet, Stage, Timeline, Track, ViewToggle, Zoom, around, hexCells, originOf, useToast, useViewMode, type Origin, type TimelineItem } from '@dc/ui';
-import { now, saveInvoice, today, upsertClient, useStore } from '../store';
+import { now, removeClient, saveInvoice, today, upsertClient, useStore } from '../store';
 import { InvoiceSheet } from './InvoiceSheet';
 import { HelpDot } from '../HelpDot';
 
@@ -32,7 +32,9 @@ export function Clientes() {
   // el contenedor real es la capa del módulo (este div es display: contents)
   const box = () => wrap.current?.closest('.zoom') ?? null;
 
-  const list = clients.filter(c => c.active).sort((a, b) => Number(b.billing === 'mensual') - Number(a.billing === 'mensual') || a.name.localeCompare(b.name));
+  const [archived, setArchived] = useState(false);
+  const nArchived = clients.filter(c => !c.active).length;
+  const list = clients.filter(c => (archived ? !c.active : c.active)).sort((a, b) => Number(b.billing === 'mensual') - Number(a.billing === 'mensual') || a.name.localeCompare(b.name));
   const owed = (c: Client) => orders.filter(o => o.clientId === c.id && o.status !== 'cancelado' && o.pay === 'pending').reduce((s, o) => s + orderTotal(o), 0);
   const thisMonth = (c: Client) => orders.filter(o => o.clientId === c.id && o.status !== 'cancelado' && monthOf(o.date) === period).reduce((s, o) => s + orderTotal(o), 0);
   const totalOwed = list.reduce((s, c) => s + owed(c), 0);
@@ -54,7 +56,7 @@ export function Clientes() {
     <div className="nest" ref={wrap}>
       <Stage>
         <Bubble d={cells[0].d} className="core">
-          <span className="eyebrow">Clientes</span>
+          <span className="eyebrow">{archived ? 'Archivados' : 'Clientes'}</span>
           <strong className="big">{list.length}</strong>
           {totalOwed > 0 ? <span className="small warn">✕ {colones(totalOwed)}</span> : <span className="small">todo al día</span>}
         </Bubble>
@@ -65,8 +67,11 @@ export function Clientes() {
             <span className="small">{c.billing === 'mensual' ? `${colones(thisMonth(c))} mes` : owed(c) ? `✕ ${colones(owed(c))}` : 'al día'}</span>
           </Bubble>
         ))}
-        <Bubble at={cells[list.length + 1].at} d={cells[list.length + 1].d} className="add" onClick={() => setDraft({ id: '', name: '', billing: 'contado', discounts: {}, active: true })} label="Nuevo cliente"><span>+</span></Bubble>
+        <Bubble at={cells[list.length + 1].at} d={cells[list.length + 1].d} className={'add' + (archived ? ' hidden-add' : '')} onClick={() => setDraft({ id: '', name: '', billing: 'contado', discounts: {}, active: true })} label="Nuevo cliente"><span>+</span></Bubble>
       </Stage>
+      {(nArchived > 0 || archived) && (
+        <button className="chip" onClick={() => setArchived(!archived)}>{archived ? '← clientes activos' : `ver archivados (${nArchived})`}</button>
+      )}
 
       {draft && (
         <Focus
@@ -98,7 +103,13 @@ export function Clientes() {
   );
 }
 
-function ClientPage({ id, onBack }: { id: string; onBack: () => void }) {
+/** Si el cliente se borró mientras su página se cierra, no se dibuja nada. */
+function ClientPage(props: { id: string; onBack: () => void }) {
+  const exists = useStore(s => s.clients.some(c => c.id === props.id));
+  return exists ? <ClientPageInner {...props} /> : null;
+}
+
+function ClientPageInner({ id, onBack }: { id: string; onBack: () => void }) {
   const client = useStore(s => s.clients.find(c => c.id === id))!;
   const offerings = useStore(s => s.offerings);
   const orders = useStore(s => s.orders);
@@ -269,7 +280,13 @@ function ClientPage({ id, onBack }: { id: string; onBack: () => void }) {
           actions={[
             { label: 'guardar', onClick: () => { upsertClient(edit); setEdit(null); }, tone: 'on' },
             { label: edit.billing, onClick: () => setEdit({ ...edit, billing: edit.billing === 'mensual' ? 'contado' : 'mensual' }), title: 'Forma de cobro' },
-            { label: edit.active ? 'activo' : 'inactivo', onClick: () => setEdit({ ...edit, active: !edit.active }), tone: edit.active ? 'ok' : 'muted' },
+            { label: edit.active ? 'archivar' : 'reactivar', onClick: () => { upsertClient({ ...edit, active: !edit.active }); setEdit(null); toast(edit.active ? `${edit.name} archivado` : `${edit.name} reactivado`); if (edit.active) onBack(); } },
+            { label: 'borrar', tone: 'bad', onClick: () => {
+              if (!confirm(`¿Borrar a ${edit.name}? Sus ventas se quedan con el nombre.`)) return;
+              if (removeClient(client) === 'tiene-facturas') { toast('Tiene facturas emitidas: se archiva en vez de borrarse'); upsertClient({ ...client, active: false }); }
+              else toast(`${client.name} borrado`);
+              setEdit(null); onBack();
+            } },
           ]}
         />
       )}

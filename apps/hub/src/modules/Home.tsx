@@ -2,7 +2,7 @@
    y, en el anillo exterior, los proyectos del círculo. */
 
 import { bakeSummary, dayLabel } from '@dc/core';
-import { Bubble, Stage, Track, around } from '../orbit/Orbit';
+import { Bubble, Stage, Track, around } from '@dc/ui';
 import { today, useStore } from '../store';
 import { MODULES } from './index';
 

@@ -9,7 +9,7 @@ export const SEED_PROJECTS: Project[] = [
 ];
 
 const pan = (code: string, name: string, price: number): Offering => ({
-  id: 'pan-' + code.toLowerCase(), projectId: DIVINE_ID, kind: 'producto', code, name, price, active: true, public: true,
+  id: 'pan-' + code.toLowerCase(), projectId: DIVINE_ID, kind: 'producto', code, name, price, active: true, public: true, pillar: 'food',
 });
 
 // Catálogo de panes del hub anterior

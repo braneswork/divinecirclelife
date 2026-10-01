@@ -1,12 +1,18 @@
 /* Catálogo: cada proyecto al centro con sus ofertas orbitando. */
 
 import { useState } from 'react';
-import { colones, type Offering, type OfferingKind } from '@dc/core';
-import { Bubble, Focus, Stage, Track, around } from '../orbit/Orbit';
+import { ALL_PILLARS, colones, pillarOf, type Offering, type OfferingKind, type PillarId } from '@dc/core';
+import type { CSSProperties } from 'react';
+import { Bubble, Focus, Stage, Track, around } from '@dc/ui';
 import { upsertOffering, useStore } from '../store';
-import { useToast } from '../toast';
+import { useToast } from '@dc/ui';
 
 const KINDS: OfferingKind[] = ['producto', 'experiencia', 'servicio'];
+/** sin pilar → esencia → sabiduría → … → alimento → sin pilar */
+const nextPillar = (id?: PillarId): PillarId | undefined => {
+  const i = ALL_PILLARS.findIndex(p => p.id === id);
+  return i === ALL_PILLARS.length - 1 ? undefined : ALL_PILLARS[i + 1].id;
+};
 const cleanCode = (s: string) => s.toUpperCase().replace(/[^A-Z0-9Ñ]/g, '');
 
 export function Catalogo() {
@@ -39,7 +45,7 @@ export function Catalogo() {
   }
 
   return (
-    <div className="module">
+    <>
       <nav className="beads" aria-label="Proyectos">
         {projects.map(p => (
           <button key={p.id} className={'bead wide' + (p.id === projectId ? ' on' : '')} onClick={() => setProjectId(p.id)} aria-pressed={p.id === projectId}>
@@ -57,14 +63,14 @@ export function Catalogo() {
           <span className="small">{list.filter(o => o.active).length} activos · {list.filter(o => o.public).length} en la web</span>
         </Bubble>
         {list.map((o, i) => (
-          <Bubble key={o.id} at={around(i, n, 40)} d={d} className={'offer' + (o.active ? '' : ' off') + (o.public ? ' public' : '')} onClick={() => open(o)} label={o.name}>
+          <Bubble key={o.id} at={around(i, n, 40)} d={d} className={'offer' + (o.active ? '' : ' off') + (o.public ? ' public' : '')} onClick={() => open(o)} label={o.name} style={{ '--pc': pillarOf(o.pillar)?.color } as CSSProperties}>
             <strong className="code">{o.code}</strong>
             <span className="small">{colones(o.price)}</span>
           </Bubble>
         ))}
         <Bubble at={around(list.length, n, 40)} d={d} className="add" onClick={() => open(null)} label="Agregar al catálogo"><span>+</span></Bubble>
       </Stage>
-      <p className="portal-hint">El código es lo que escribes en Pan: <b>2C</b> = 2 Campesino. Borde dorado = visible en la web.</p>
+      <p className="hint">El código es lo que escribes en Pan: <b>2C</b> = 2 Campesino. El color del borde es su pilar; el halo dorado, que sale en la web.</p>
 
       {draft && (
         <Focus
@@ -80,12 +86,13 @@ export function Catalogo() {
           }
           actions={[
             { label: 'guardar', onClick: save, tone: 'on' },
+            { label: pillarOf(draft.pillar)?.name ?? 'sin pilar', onClick: () => setDraft({ ...draft, pillar: nextPillar(draft.pillar) }), title: 'Cambiar pilar' },
             { label: draft.kind, onClick: () => setDraft({ ...draft, kind: KINDS[(KINDS.indexOf(draft.kind) + 1) % KINDS.length] }), title: 'Cambiar tipo' },
             { label: draft.active ? 'activo' : 'inactivo', onClick: () => setDraft({ ...draft, active: !draft.active }), tone: draft.active ? 'ok' : 'muted' },
             { label: draft.public ? 'en la web' : 'oculto', onClick: () => setDraft({ ...draft, public: !draft.public }), tone: draft.public ? 'ok' : 'muted' },
           ]}
         />
       )}
-    </div>
+    </>
   );
 }

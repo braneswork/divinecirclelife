@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { parseQuick, resolveDay } from './quick';
 import { SEED_OFFERINGS } from './seed';
 import { bakeSummary } from './bake';
-import { colones, orderTotal } from './money';
+import { colones, orderTotal, payTotals } from './money';
 import type { Offering, Order } from './types';
 
 const TODAY = '2026-10-01'; // jueves
@@ -45,9 +45,15 @@ describe('parseQuick', () => {
   it('fecha, pagado y nota', () => {
     const r = ok('1C Juan @mañana pagado // sin semillas');
     expect(r.date).toBe('2026-10-02');
-    expect(r.paid).toBe(true);
+    expect(r.pay).toBe('paid');
     expect(r.note).toBe('sin semillas');
     expect(r.client).toBe('Juan');
+  });
+
+  it('crédito a favor y por defecto no pagó', () => {
+    expect(ok('1C Ana credito').pay).toBe('credit');
+    expect(ok('1C Ana crédito').pay).toBe('credit');
+    expect(ok('1C Ana').pay).toBe('pending');
   });
 
   it('al editar conserva el día original si no se escribe @fecha', () => {
@@ -82,7 +88,7 @@ describe('resolveDay', () => {
 
 describe('totales', () => {
   const mk = (items: [string, number][], extra: Partial<Order> = {}): Order => ({
-    id: Math.random().toString(), client: 'x', date: TODAY, status: 'pendiente', paid: false, source: 'hub',
+    id: Math.random().toString(), client: 'x', date: TODAY, status: 'pendiente', pay: 'pending', source: 'hub',
     createdAt: '', updatedAt: '',
     items: items.map(([code, qty]) => {
       const o = cat.find(c => c.code === code)!;
@@ -95,6 +101,11 @@ describe('totales', () => {
     expect(orderTotal(mk([['C', 2], ['MS', 1]]))).toBe(13000);
     expect(orderTotal(mk([['C', 2]], { amountOverride: 7000 }))).toBe(7000);
     expect(colones(13000)).toBe('₡13.000');
+  });
+
+  it('totales por marca de pago', () => {
+    const t = payTotals([mk([['C', 1]], { pay: 'paid' }), mk([['C', 2]]), mk([['MS', 1]], { pay: 'credit' }), mk([['C', 9]], { status: 'cancelado' })]);
+    expect(t).toEqual({ total: 17000, paid: 4000, pending: 8000, credit: 5000 });
   });
 
   it('resumen de horno ignora cancelados', () => {

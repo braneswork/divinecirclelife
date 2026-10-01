@@ -1,5 +1,19 @@
 # Arquitectura · el círculo
 
+## Pilares
+
+El círculo de inspiración de Divine Circle (imágenes en `packages/brand/pilares/`, datos en
+`packages/core/src/pillars.ts`): **Essence · Spirituality** al centro y alrededor, desde arriba en
+sentido horario, **Wisdom · Expansion**, **Imagination · Manifestation**, **Movement · Adventure**,
+**Nature · Preservation**, **Family · Traditions** y **Food · Nutrition**. Cada pilar tiene su color,
+y cada oferta del catálogo puede pertenecer a un pilar (el pan es Food).
+
+## Marca de pago y horno (del sistema original de Divine)
+
+- Pago: **✓ pagado** (verde) · **✕ no pagó** (rojo) · **+ crédito a favor** (magenta, dorado en oscuro).
+  Tocar la marca avanza en ese orden.
+- Horno: por hornear → horneando → listo → entregado (o cancelado).
+
 ## Composición
 
 El hub no usa pestañas ni listas: todo es **algo al centro con cosas alrededor**, como el
@@ -10,10 +24,14 @@ símbolo de Divine Circle (un círculo rodeado de seis).
 - **Cada módulo:** su tema al centro y sus elementos en órbita. En Pan, el día al centro,
   un anillo con lo que hay que hornear y los pedidos orbitando.
 - **Foco:** tocar un elemento lo trae al centro con sus acciones alrededor.
-- La flor de arriba siempre regresa al inicio.
+- **Una sola página:** cada sección ocupa toda la pantalla y cambiar de sección desliza hacia
+  un lado (también con el dedo o las flechas del teclado). El logo regresa al inicio; los puntitos
+  de abajo saltan a cualquier sección.
+- Títulos en Montserrat; Cinzel queda solo en la marca.
 
-Piezas en `apps/hub/src/orbit/Orbit.tsx`: `Stage`, `Track`, `Bubble`, `around()`, `Donut`, `Focus`.
-Para un módulo nuevo: crear `modules/X.tsx` con esas piezas y agregarlo a `modules/index.ts`.
+El UI kit vive en `packages/ui` (`Stage`, `Track`, `Bubble`, `around()`, `Donut`, `Focus`,
+`PayMark`, `PillarFlower`, `Pager`, `PageDots`, toasts) y se ve en `apps/kit`.
+Para un módulo nuevo del hub: crear `modules/X.tsx` con esas piezas y agregarlo a `modules/index.ts`.
 
 ## Modelo
 

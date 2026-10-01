@@ -50,6 +50,7 @@ create table public.offerings (
   price      integer not null default 0 check (price >= 0),
   active     boolean not null default true,
   public     boolean not null default false,
+  pillar     text check (pillar in ('essence', 'wisdom', 'imagination', 'movement', 'nature', 'family', 'food')),
   created_at timestamptz not null default now()
 );
 
@@ -63,8 +64,9 @@ create table public.orders (
   date            date not null,
   items           jsonb not null default '[]'::jsonb,
   amount_override integer check (amount_override >= 0),
-  status          text not null default 'pendiente' check (status in ('pendiente', 'listo', 'entregado', 'cancelado')),
-  paid            boolean not null default false,
+  status          text not null default 'pendiente' check (status in ('pendiente', 'horneando', 'listo', 'entregado', 'cancelado')),
+  -- marca de pago de Divine: paid ✓ · pending ✕ (no pagó) · credit + (crédito a favor)
+  pay             text not null default 'pending' check (pay in ('paid', 'pending', 'credit')),
   note            text,
   source          text not null default 'hub' check (source in ('hub', 'web')),
   created_at      timestamptz not null default now(),
@@ -142,13 +144,13 @@ insert into public.projects (id, slug, name, ring, branes, tagline) values
   ('take-off', 'take-off', 'Take Off Surf School', 'aliado', true, 'Clases de surf'),
   ('branes', 'branes', 'Branes', 'aliado', true, 'Coworking y comunidad');
 
-insert into public.offerings (id, project_id, kind, code, name, price, public) values
-  ('pan-c',   'divine-circle', 'producto', 'C',   'Campesino',     4000, true),
-  ('pan-ms',  'divine-circle', 'producto', 'MS',  'Multiseeds',    5000, true),
-  ('pan-cu',  'divine-circle', 'producto', 'CU',  'Cuadrado',      4000, true),
-  ('pan-bag', 'divine-circle', 'producto', 'BAG', 'Baguette',      1000, true),
-  ('pan-cr',  'divine-circle', 'producto', 'CR',  'Cinnamon Roll', 1500, true),
-  ('pan-bb',  'divine-circle', 'producto', 'BB',  'Burger Bun',     700, true),
-  ('pan-cia', 'divine-circle', 'producto', 'CIA', 'Ciabatta',      1000, true),
-  ('pan-pz',  'divine-circle', 'producto', 'PZ',  'Pizza',         4000, true),
-  ('pan-pzf', 'divine-circle', 'producto', 'PZF', 'Pizza Frozen',  3000, true);
+insert into public.offerings (id, project_id, kind, code, name, price, public, pillar) values
+  ('pan-c',   'divine-circle', 'producto', 'C',   'Campesino',     4000, true, 'food'),
+  ('pan-ms',  'divine-circle', 'producto', 'MS',  'Multiseeds',    5000, true, 'food'),
+  ('pan-cu',  'divine-circle', 'producto', 'CU',  'Cuadrado',      4000, true, 'food'),
+  ('pan-bag', 'divine-circle', 'producto', 'BAG', 'Baguette',      1000, true, 'food'),
+  ('pan-cr',  'divine-circle', 'producto', 'CR',  'Cinnamon Roll', 1500, true, 'food'),
+  ('pan-bb',  'divine-circle', 'producto', 'BB',  'Burger Bun',     700, true, 'food'),
+  ('pan-cia', 'divine-circle', 'producto', 'CIA', 'Ciabatta',      1000, true, 'food'),
+  ('pan-pz',  'divine-circle', 'producto', 'PZ',  'Pizza',         4000, true, 'food'),
+  ('pan-pzf', 'divine-circle', 'producto', 'PZF', 'Pizza Frozen',  3000, true, 'food');

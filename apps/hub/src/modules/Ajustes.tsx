@@ -6,9 +6,9 @@ import { sb } from '../supabase';
 import { syncNow } from '../cloud';
 import { getState, replaceState, type State } from '../store';
 import { syncError } from '../sync';
-import { useToast } from '../toast';
+import { useToast } from '@dc/ui';
 import { getTheme, setTheme, type Theme } from '../theme';
-import { Bubble, Focus, Stage, Track, around } from '../orbit/Orbit';
+import { Bubble, Focus, Stage, Track, around } from '@dc/ui';
 
 export function Ajustes() {
   const toast = useToast();
@@ -57,7 +57,7 @@ export function Ajustes() {
   ];
 
   return (
-    <div className="module">
+    <>
       <Stage>
         <Track r={36} dashed />
         <Bubble d={34} className="core">
@@ -106,6 +106,6 @@ export function Ajustes() {
           ] : []}
         />
       )}
-    </div>
+    </>
   );
 }

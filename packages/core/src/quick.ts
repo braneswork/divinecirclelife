@@ -6,12 +6,12 @@
    Reglas:
    - <cantidad><CÓDIGO> (con o sin espacio) agrega una línea; el código debe existir.
    - @hoy, @mañana, @pasado, @lun…@dom, @15 o @15/10 fija el día.
-   - "pagado" marca el pedido como pagado.
+   - "pagado" lo marca pagado (✓); "credito" como crédito a favor (+).
    - lo que viene después de "//" es una nota.
    - un número suelto al final del nombre es el monto acordado.
    - todo lo demás es el nombre del cliente. */
 
-import type { Offering } from './types';
+import type { Offering, PayState } from './types';
 import { addDays, fromISODate, toISODate } from './dates';
 
 export interface QuickLine {
@@ -26,7 +26,7 @@ export type QuickResult =
       client: string;
       date: string;
       amountOverride?: number;
-      paid: boolean;
+      pay: PayState;
       note?: string;
     }
   | { ok: false; error: 'vacio' | 'sin_items' | 'sin_nombre' | 'codigo_desconocido' | 'fecha_invalida'; detail?: string };
@@ -80,7 +80,7 @@ export function parseQuick(input: string, catalog: Offering[], today: string, de
   }
 
   let date = defaultDate;
-  let paid = false;
+  let pay: PayState = 'pending';
   const rest: string[] = [];
   for (const word of text.split(/\s+/).filter(Boolean)) {
     if (word.startsWith('@')) {
@@ -88,7 +88,9 @@ export function parseQuick(input: string, catalog: Offering[], today: string, de
       if (!d) return { ok: false, error: 'fecha_invalida', detail: word };
       date = d;
     } else if (/^pagado$/i.test(word)) {
-      paid = true;
+      pay = 'paid';
+    } else if (/^cr[eé]dito$/i.test(word)) {
+      pay = 'credit';
     } else {
       rest.push(word);
     }
@@ -129,7 +131,7 @@ export function parseQuick(input: string, catalog: Offering[], today: string, de
   const client = parts.join(' ').trim();
   if (!client) return { ok: false, error: 'sin_nombre' };
 
-  return { ok: true, lines, client, date, amountOverride, paid, note };
+  return { ok: true, lines, client, date, amountOverride, pay, note };
 }
 
 export const QUICK_ERRORS: Record<Exclude<QuickResult, { ok: true }>['error'], string> = {

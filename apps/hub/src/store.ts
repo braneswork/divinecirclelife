@@ -5,7 +5,7 @@
 import { useSyncExternalStore } from 'react';
 import {
   SEED_OFFERINGS, SEED_PROJECTS, toISODate,
-  type Offering, type Order, type Project, type QuickLine,
+  type Offering, type Order, type PayState, type Project, type QuickLine,
 } from '@dc/core';
 import { pushRow, deleteRow } from './sync';
 
@@ -17,10 +17,21 @@ export interface State {
 
 const KEY = 'divine-circle-hub-v2';
 
+/** Pedidos guardados antes de la marca ✓ ✕ + traían paid: boolean. */
+const migrate = (s: State): State => ({
+  ...s,
+  orders: s.orders.map(o => {
+    const old = o as Order & { paid?: boolean };
+    if (old.pay) return o;
+    const { paid, ...rest } = old;
+    return { ...rest, pay: paid ? 'paid' : 'pending' };
+  }),
+});
+
 function load(): State {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return JSON.parse(raw) as State;
+    if (raw) return migrate(JSON.parse(raw) as State);
   } catch { /* storage bloqueado o dañado: arrancamos limpio */ }
   return { orders: [], offerings: SEED_OFFERINGS, projects: SEED_PROJECTS };
 }
@@ -35,7 +46,7 @@ function commit(next: State) {
 }
 
 export const getState = () => state;
-export const replaceState = (next: State) => commit(next);
+export const replaceState = (next: State) => commit(migrate(next));
 
 export function useStore<T>(pick: (s: State) => T): T {
   return useSyncExternalStore(
@@ -54,7 +65,7 @@ export interface NewOrder {
   client: string;
   date: string;
   amountOverride?: number;
-  paid: boolean;
+  pay: PayState;
   note?: string;
 }
 
@@ -70,7 +81,8 @@ export function saveOrder(input: NewOrder, replaceId?: string): Order {
     })),
     amountOverride: input.amountOverride,
     status: prev?.status ?? 'pendiente',
-    paid: input.paid || (prev?.paid ?? false),
+    // al editar se conserva la marca de pago salvo que se escriba "pagado" o "credito"
+    pay: input.pay !== 'pending' ? input.pay : (prev?.pay ?? 'pending'),
     note: input.note,
     phone: prev?.phone,
     source: prev?.source ?? 'hub',

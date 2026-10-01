@@ -1,10 +1,10 @@
 /* Módulos que vienen: se muestran con lo que van a contener orbitando. */
 
-import { Bubble, Stage, Track, around } from '../orbit/Orbit';
+import { Bubble, Stage, Track, around } from '@dc/ui';
 
 function Soon({ title, line, seeds }: { title: string; line: string; seeds: string[] }) {
   return (
-    <div className="module">
+    <>
       <Stage>
         <Track r={39} dashed />
         <Bubble d={36} className="core">
@@ -16,7 +16,7 @@ function Soon({ title, line, seeds }: { title: string; line: string; seeds: stri
           <Bubble key={s} at={around(i, seeds.length, 39, 20)} d={18} className="ghost"><span>{s}</span></Bubble>
         ))}
       </Stage>
-    </div>
+    </>
   );
 }
 

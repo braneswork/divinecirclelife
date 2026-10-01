@@ -1,5 +1,5 @@
 {
-  "name": "@dc/hub",
+  "name": "@dc/kit",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,10 +10,9 @@
   "dependencies": {
     "@dc/brand": "*",
     "@dc/core": "*",
-    "@supabase/supabase-js": "^2.117.2",
+    "@dc/ui": "*",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0",
-    "@dc/ui": "*"
+    "react-dom": "^19.3.0"
   },
   "devDependencies": {
     "@types/react": "^19",

@@ -3,6 +3,7 @@
    porcentajes del Stage, y el texto escala con él (unidades cqw). */
 
 import { useEffect, type CSSProperties, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 
 export interface Point { x: number; y: number }
 
@@ -12,8 +13,10 @@ export function around(i: number, n: number, r: number, start = 0): Point {
   return { x: 50 + r * Math.cos(a), y: 50 + r * Math.sin(a) };
 }
 
-export function Stage({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <div className={'stage ' + className}>{children}</div>;
+/** Escenario cuadrado. Con fit (por defecto) ocupa el mayor cuadrado que cabe en el espacio libre de la página. */
+export function Stage({ children, className = '', fit = true }: { children: ReactNode; className?: string; fit?: boolean }) {
+  const stage = <div className={'stage ' + className}>{children}</div>;
+  return fit ? <div className="stage-box">{stage}</div> : stage;
 }
 
 /** Anillo decorativo (pista de una órbita). */
@@ -58,9 +61,10 @@ export function Focus({ center, actions, onClose }: { center: ReactNode; actions
     return () => removeEventListener('keydown', k);
   }, [onClose]);
   const all = [...actions, { label: '×', onClick: onClose, tone: 'muted' as const, title: 'Cerrar' }];
-  return (
+  // portal: el paginador usa transform, que rompería el position: fixed
+  return createPortal(
     <div className="focus" role="dialog" aria-modal="true" onClick={e => e.target === e.currentTarget && onClose()}>
-      <Stage className="focus-stage">
+      <Stage className="focus-stage" fit={false}>
         <Track r={41} dashed />
         <div className="bubble focus-center" style={{ '--x': 50, '--y': 50, '--d': 62 } as CSSProperties}>{center}</div>
         {all.map((a, i) => (
@@ -69,7 +73,8 @@ export function Focus({ center, actions, onClose }: { center: ReactNode; actions
           </Bubble>
         ))}
       </Stage>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

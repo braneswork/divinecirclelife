@@ -3,9 +3,9 @@
 
 import { useState } from 'react';
 import type { Project, Ring } from '@dc/core';
-import { Bubble, Focus, Stage, Track, around } from '../orbit/Orbit';
+import { Bubble, Focus, Stage, Track, around } from '@dc/ui';
 import { upsertProject, useStore } from '../store';
-import { useToast } from '../toast';
+import { useToast } from '@dc/ui';
 import mark from '@dc/brand/assets/mark.png';
 
 const RING_LABEL: Record<Ring, string> = { nucleo: 'núcleo', aliado: 'aliado', vecino: 'vecino' };
@@ -49,7 +49,7 @@ export function Circulo() {
   );
 
   return (
-    <div className="module">
+    <>
       <Stage>
         <Track r={27} />
         <Track r={43} dashed />
@@ -60,7 +60,7 @@ export function Circulo() {
         {neighbors.map((p, i) => node(p, around(i, neighbors.length + 1, 43, 15), 12))}
         <Bubble at={around(neighbors.length, neighbors.length + 1, 43, 15)} d={12} className="add" onClick={() => open(null)} label="Sumar un proyecto"><span>+</span></Bubble>
       </Stage>
-      <p className="portal-hint">
+      <p className="hint">
         Anillo cercano: aliados · anillo exterior: vecinos · <span className="legend gold" /> ecosistema Branes <span className="legend" /> independiente
       </p>
 
@@ -83,6 +83,6 @@ export function Circulo() {
           ]}
         />
       )}
-    </div>
+    </>
   );
 }

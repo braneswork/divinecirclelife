@@ -1,9 +1,10 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import '@dc/brand/tokens.css';
+import '@dc/ui/ui.css';
 import './hub.css';
+import { ToastProvider } from '@dc/ui';
 import { App } from './App';
-import { ToastProvider } from './toast';
 import { applyTheme } from './theme';
 
 applyTheme();

@@ -9,9 +9,10 @@
   "scripts": {
     "dev:hub": "npm run dev -w @dc/hub",
     "dev:web": "npm run dev -w @dc/web",
-    "build": "npm run build -w @dc/hub && npm run build -w @dc/web",
+    "build": "npm run build -w @dc/hub && npm run build -w @dc/web && npm run build -w @dc/kit",
     "test": "vitest run",
-    "typecheck": "tsc -p packages/core && tsc -p apps/hub && tsc -p apps/web"
+    "typecheck": "tsc -p packages/core && tsc -p packages/ui && tsc -p apps/hub && tsc -p apps/web && tsc -p apps/kit",
+    "dev:kit": "npm run dev -w @dc/kit"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

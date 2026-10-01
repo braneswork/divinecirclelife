@@ -18,6 +18,8 @@ export interface Project {
   active: boolean;
 }
 
+import type { PillarId } from './pillars';
+
 export type OfferingKind = 'producto' | 'experiencia' | 'servicio';
 
 export interface Offering {
@@ -32,9 +34,15 @@ export interface Offering {
   active: boolean;
   /** visible en la web */
   public: boolean;
+  /** pilar al que pertenece (pan → food, surf → movement…) */
+  pillar?: PillarId;
 }
 
-export type OrderStatus = 'pendiente' | 'listo' | 'entregado' | 'cancelado';
+/** Flujo del horno, como en el sistema original de Divine. */
+export type OrderStatus = 'pendiente' | 'horneando' | 'listo' | 'entregado' | 'cancelado';
+
+/** Marca de pago de Divine: ✓ pagado · ✕ no pagó · + crédito a favor. */
+export type PayState = 'paid' | 'pending' | 'credit';
 export type OrderSource = 'hub' | 'web';
 
 export interface OrderItem {
@@ -54,7 +62,7 @@ export interface Order {
   /** monto acordado que reemplaza la suma de las líneas */
   amountOverride?: number;
   status: OrderStatus;
-  paid: boolean;
+  pay: PayState;
   note?: string;
   phone?: string;
   source: OrderSource;

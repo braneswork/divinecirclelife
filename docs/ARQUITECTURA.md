@@ -85,20 +85,19 @@ Proyecto de Supabase: `vbeubyipzzpfbdjswavh` (URL y clave anon pública en
    de `migrations/0001_circulo.sql`; se puede correr varias veces).
    Convive con las tablas del hub anterior (`divine_circle_data`, `divine_circle_backups`).
 2. Authentication → Providers: Email activo.
-3. Authentication → URL Configuration: Site URL = `https://braneswork.github.io/divinecirclelife/`
-   y en Redirect URLs `https://braneswork.github.io/divinecirclelife/**`.
+3. Authentication → URL Configuration: Site URL = la dirección de Vercel del hub, y en
+   Redirect URLs agregar esa dirección con `/**` y `https://*.vercel.app/**` (vistas previas).
 4. Entrar al hub → Ajustes → Nube → correo → enlace. **La primera persona que entra queda
    como dueña** (`claim_ownership()`); las demás quedan sin acceso hasta que se agreguen a
    `members`.
 5. La primera sincronización de cada dispositivo sube lo que ya tenía (fichas, fotos, ventas);
    después la nube manda.
 
-## Publicación (GitHub Pages)
+## Publicación (Vercel)
 
-`.github/workflows/pages.yml` construye con `npm run build:site` en cada push a `main` y publica
-`dist/` en https://braneswork.github.io/divinecirclelife/ : hub en `/`, web en `/web/`,
-UI kit en `/kit/` y el hub anterior en `/legacy/`. En Settings → Pages, Source debe ser
-"GitHub Actions". (`vercel.json` queda por si se usa Vercel más adelante.)
+`vercel.json` construye con `npm run build:site` y publica `dist/`:
+hub en `/`, web en `/web/`, UI kit en `/kit/` y el hub anterior en `/legacy/`.
+Cada rama genera una vista previa; `main` es producción.
 
 ## Próximos módulos
 

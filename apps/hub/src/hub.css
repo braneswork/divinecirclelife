@@ -356,3 +356,64 @@ code { font-size: .85em; word-break: break-all; }
 .prog-side b { font-variant-numeric: tabular-nums; }
 .prog-side small { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
 .prog-row.horneando .prog-side small, .prog-row.listo .prog-side small { color: var(--gold); }
+
+/* ---------- mar (en inicio y su página) ---------- */
+.sea-strip {
+  flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 2px;
+  border: 0; background: none; cursor: pointer; padding: 2px 0 0; max-width: 100%;
+}
+.sea-strip.empty span { font-size: 12px; color: var(--muted); padding: 10px 0; }
+.sea-spot { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .18em; color: var(--muted); }
+.sea-dots { display: flex; gap: 6px; justify-content: center; }
+.sea-dot {
+  --c: #5FA9C4;
+  width: 60px; height: 60px; border-radius: 50%; border: 2px solid var(--c); background: var(--card);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.05;
+  box-shadow: 0 0 10px color-mix(in srgb, var(--c) 30%, transparent);
+}
+.sea-dot b { font-size: 15px; font-weight: 700; }
+.sea-dot small { font-size: 8.5px; color: var(--muted); white-space: nowrap; max-width: 54px; overflow: hidden; text-overflow: ellipsis; }
+.sea-dot em { font-style: normal; font-size: 8px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); white-space: nowrap; max-width: 54px; overflow: hidden; text-overflow: ellipsis; }
+.sea-dot.wind.good { --c: var(--ok); }
+.sea-dot.wind.bad { --c: var(--bad); }
+.sea-dot.tide { --c: #9B7FD1; }
+.sea-dot.sky { --c: #E58A5C; }
+.sea-dot.sun { --c: var(--gold); }
+.sea-strip:hover .sea-dot { transform: translateY(-1px); }
+.sea-dot { transition: transform .2s; }
+@media (max-width: 360px) { .sea-dot { width: 54px; height: 54px; } .sea-dots { gap: 4px; } }
+
+.mar { width: 100%; max-width: 620px; display: flex; flex-direction: column; gap: 10px; padding-bottom: 16px; }
+.mar-card { border: 1.5px solid var(--line); border-radius: 18px; background: var(--card); padding: 12px 14px; }
+.mar-card header { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+.mar-card header strong { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; display: inline-flex; align-items: center; gap: 6px; }
+.mar-card header span { font-size: 12.5px; color: var(--muted); }
+.mar-meta { font-size: 12px; color: var(--muted); text-align: center; margin: 6px 0 0; }
+.tide-curve { width: 100%; height: auto; max-height: 220px; display: block; overflow: visible; }
+.tide-fill { fill: color-mix(in srgb, #5FA9C4 18%, transparent); }
+.tide-line { fill: none; stroke: #5FA9C4; stroke-width: 2; }
+.tide-now { stroke: var(--gold); stroke-width: 1.5; stroke-dasharray: 3 3; }
+.tide-dot { stroke: none; }
+.tide-dot.alta { fill: #5FA9C4; } .tide-dot.baja { fill: var(--muted); }
+.tide-label { font-size: 3px; fill: var(--fg); font-weight: 600; }
+.tide-axis { font-size: 2.6px; fill: var(--muted); }
+.mar-windows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.mar-windows li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 10px; padding: 6px 10px; border-radius: 12px; border: 1.5px solid var(--line); }
+.mar-windows li.on { border-color: var(--ok); background: color-mix(in srgb, var(--ok) 10%, var(--card)); }
+.mar-windows b { font-size: 13px; }
+.mar-windows span { font-weight: 700; color: var(--ok); font-variant-numeric: tabular-nums; }
+.mar-windows small { color: var(--muted); font-size: 12px; flex-basis: 100%; }
+.mar-hours { list-style: none; margin: 0; padding: 0; }
+.mar-hours li {
+  display: grid; grid-template-columns: 44px 1fr 1fr 18px 50px; align-items: center; gap: 6px;
+  padding: 6px 4px; border-bottom: 1px dotted var(--line); font-variant-numeric: tabular-nums;
+}
+.mar-hours li:last-child { border-bottom: 0; }
+.mar-hours li.now { background: color-mix(in srgb, var(--gold) 14%, transparent); border-radius: 10px; }
+.mar-hours li > span { display: flex; flex-direction: column; line-height: 1.15; }
+.mar-hours b { font-size: 13.5px; }
+.mar-hours small { font-size: 10.5px; color: var(--muted); }
+.mh-time { font-weight: 600; color: var(--muted); font-size: 13px; }
+.mh-wind.good b { color: var(--ok); } .mh-wind.calm b { color: var(--fg); } .mh-wind.bad b { color: var(--bad); }
+.mh-tide { color: #9B7FD1; font-weight: 800; text-align: center; }
+.mh-sky { text-align: right; align-items: flex-end; }

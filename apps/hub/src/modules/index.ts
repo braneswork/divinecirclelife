@@ -8,8 +8,9 @@ import { Circulo } from './Circulo';
 import { Ajustes } from './Ajustes';
 import { Entrada } from './Entrada';
 import { Salida } from './Salida';
+import { Mar } from './Mar';
 
-export type ModuleId = 'ventas' | 'experiencias' | 'clientes' | 'caja' | 'circulo' | 'productos' | 'ajustes' | 'entrada' | 'salida';
+export type ModuleId = 'ventas' | 'experiencias' | 'clientes' | 'caja' | 'circulo' | 'productos' | 'ajustes' | 'entrada' | 'salida' | 'mar';
 
 /** cada módulo toma el color de un pilar */
 export interface ModuleDef { id: ModuleId; label: string; short?: string; icon: string; tone: string; view: ComponentType }
@@ -35,4 +36,5 @@ export const EXTRA: ModuleDef[] = [
   { id: 'ajustes', label: 'Ajustes', icon: 'ajustes', tone: 'var(--gold)', view: Ajustes },
   { id: 'entrada', label: 'Nueva entrada', icon: 'mas', tone: 'var(--ok)', view: Entrada },
   { id: 'salida', label: 'Nueva salida', icon: 'menos', tone: 'var(--bad)', view: Salida },
+  { id: 'mar', label: 'Mar', icon: 'experiencias', tone: c('movement'), view: Mar },
 ];

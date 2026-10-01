@@ -139,3 +139,23 @@ export function goodWindows(r: SeaReport, face: number): Window[] {
   // "to" es la última hora buena: la ventana termina una hora después
   return out.map(w => ({ ...w, to: `${String(Number(w.to.slice(0, 2)) + 1).padStart(2, '0')}:00` }));
 }
+
+/** Ícono del clima según el código WMO; de noche, despejado es luna. */
+export function weatherIcon(code: number | null, night = false): string {
+  if (code == null || code <= 1) return night ? 'luna' : 'sol';
+  if (code === 2) return night ? 'nube' : 'parcial';
+  if (code <= 48) return 'nube';
+  if (code >= 95) return 'tormenta';
+  return 'lluvia';
+}
+
+/** Nivel de marea interpolado en un minuto dado (YYYY-MM-DDTHH:MM). */
+export function tideAt(hours: SeaHour[], at: string): number | null {
+  const pts = hours.filter(h => h.tide != null);
+  const t = Date.parse(at + 'Z');
+  for (let i = 1; i < pts.length; i++) {
+    const a = Date.parse(pts[i - 1].time + 'Z'), b = Date.parse(pts[i].time + 'Z');
+    if (t >= a && t <= b) return pts[i - 1].tide! + (pts[i].tide! - pts[i - 1].tide!) * ((t - a) / (b - a || 1));
+  }
+  return null;
+}

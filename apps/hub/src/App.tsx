@@ -6,7 +6,7 @@ import { Icon, IconNav, Zoom, originOf, type Origin } from '@dc/ui';
 import logo from '@dc/brand/assets/logo-light.png';
 import { syncNow } from './cloud';
 import { ensureRecurring } from './store';
-import { EXTRA, MODULES, type ModuleId } from './modules';
+import { EXTRA, MODULES, NAV_ORDER, type ModuleId } from './modules';
 import { NavContext } from './nav';
 import { Help } from './Help';
 import { Home } from './modules/Home';
@@ -85,7 +85,7 @@ export function App() {
       </main>
 
       <IconNav
-        items={[{ id: 'inicio', label: 'Inicio', icon: 'inicio' }, ...MODULES.map(m => ({ id: m.id, label: m.short ?? m.label, icon: m.icon }))]}
+        items={[{ id: 'inicio', label: 'Inicio', icon: 'inicio' }, ...NAV_ORDER.map(id => MODULES.find(m => m.id === id)!).map(m => ({ id: m.id, label: m.short ?? m.label, icon: m.icon }))]}
         active={current?.id ?? (open ? '' : 'inicio')}
         onPick={(id, el) => (id === 'inicio' ? leave() : enter(id as ModuleId, el))}
       />

@@ -56,5 +56,27 @@
         }
       ]
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "(web\\..+|divinecircle-web\\.vercel\\.app)"
+        }
+      ],
+      "destination": "/web/index.html"
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "(web\\..+|divinecircle-web\\.vercel\\.app)"
+        }
+      ],
+      "destination": "/web/:path*"
+    }
   ]
 }

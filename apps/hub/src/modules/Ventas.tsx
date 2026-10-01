@@ -138,7 +138,7 @@ export function Ventas() {
       </form>
       <p className={'hint' + (text.trim() && !parsed.ok ? ' bad' : '')} aria-live="polite">
         {parsed.ok
-          ? <><b>{matchClient(parsed.client, clients)?.name ?? parsed.client}</b>{matchClient(parsed.client, clients)?.billing === 'mensual' ? ' (mensual)' : ''} · {parsed.lines.map(l => `${l.qty} ${l.offering.name}`).join(', ')} · {colones(parsed.amountOverride ?? parsed.lines.reduce((s, l) => s + l.qty * l.offering.price, 0))} · {dayLabel(parsed.date, now)} · {PAY[parsed.pay].mark} {PAY[parsed.pay].label}{parsed.weekly ? ' · ↻ semanal' : ''}</>
+          ? <><b>{matchClient(parsed.client, clients)?.name ?? parsed.client}</b>{matchClient(parsed.client, clients)?.billing === 'mensual' ? ' (mensual)' : ''} · {parsed.lines.map(l => `${l.qty} ${l.offering.name}`).join(', ')} · {colones(parsed.amountOverride ?? parsed.lines.reduce((s, l) => s + Math.round(l.qty * l.offering.price * (1 - (matchClient(parsed.client, clients)?.discounts[l.offering.id] ?? 0))), 0))} · {dayLabel(parsed.date, now)} · {PAY[parsed.pay].mark} {PAY[parsed.pay].label}{parsed.weekly ? ' · ↻ semanal' : ''}</>
           : text.trim() ? QUICK_ERRORS[parsed.error] + (parsed.detail ? `: ${parsed.detail}` : '') : null}
       </p>
 

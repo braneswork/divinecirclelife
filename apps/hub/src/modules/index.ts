@@ -27,6 +27,9 @@ export const MODULES: ModuleDef[] = [
   { id: 'productos', label: 'Productos', short: 'Product.', icon: 'productos', tone: c('food'), view: Productos },
 ];
 
+/** Orden de la navegación de abajo (los pétalos del inicio mantienen su lugar). */
+export const NAV_ORDER: ModuleId[] = ['ventas', 'productos', 'experiencias', 'caja', 'clientes', 'circulo'];
+
 /** Círculos que no son pétalos: ajustes (engranaje), + entrada y − salida. */
 export const EXTRA: ModuleDef[] = [
   { id: 'ajustes', label: 'Ajustes', icon: 'ajustes', tone: 'var(--gold)', view: Ajustes },

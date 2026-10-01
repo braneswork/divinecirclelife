@@ -28,7 +28,7 @@ export function Ventas() {
   const [editing, setEditing] = useState<string | null>(null);
   const [focus, setFocus] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [view, setView] = useViewMode('ventas');
+  const [view, setView] = useViewMode('ventas', ['programa', 'hoy', 'semanal', 'historial']);
   const recurring = useStore(s => s.recurring);
   const [fijo, setFijo] = useState<string | null>(null);
 
@@ -48,6 +48,16 @@ export function Ventas() {
   const bySize = [...dayOrders].sort((a, b) => orderTotal(a) - orderTotal(b));
   const cells = spiralCells(bySize.length, { hole: 16, rotate: -90 });
   const focused = orders.find(o => o.id === focus);
+
+  // próximos: de hoy en adelante, lo que falta entregar · historial: los últimos 30 días
+  const upcoming = orders.filter(o => o.date >= now && o.status !== 'entregado' && o.status !== 'cancelado').sort((a, b) => a.date.localeCompare(b.date) || a.createdAt.localeCompare(b.createdAt));
+  const past = orders.filter(o => o.date < now && o.date >= addDays(now, -30));
+  const row = (o: Order, showStatus: boolean) => ({
+    id: o.id, date: o.date, mark: o.pay, muted: o.status === 'cancelado',
+    title: `${o.recurringId ? '↻ ' : ''}${o.client}`,
+    detail: `${o.items.map(i => `${i.qty} ${i.name}`).join(' · ')}${showStatus || o.status === 'cancelado' ? ` · ${o.status === 'cancelado' ? 'cancelado' : STATUS_FLOW[o.status].label}` : ''}`,
+    amount: orderTotal(o), onClick: () => setFocus(o.id),
+  });
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -72,7 +82,7 @@ export function Ventas() {
 
   return (
     <>
-      <nav className="beads" aria-label="Días" data-noswipe>
+      {view === 'hoy' && <nav className="beads" aria-label="Días" data-noswipe>
         <button className="bead nav" onClick={() => setDay(addDays(day, -1))} aria-label="Día anterior">‹</button>
         {week.map(d => {
           const n = countOn(d);
@@ -84,15 +94,13 @@ export function Ventas() {
           );
         })}
         <button className="bead nav" onClick={() => setDay(addDays(day, 1))} aria-label="Día siguiente">›</button>
-      </nav>
+      </nav>}
 
-      <ViewToggle value={view} onChange={setView} options={['circulo', 'historial', 'semanal']} />
-      {view === 'semanal' ? <Fijos /> : view === 'historial' ? (
-        <Timeline today={now} empty="Sin ventas este día." items={dayOrders.map(o => ({
-          id: o.id, date: o.date, mark: o.pay, muted: o.status === 'cancelado',
-          title: o.client, detail: `${o.recurringId ? '↻ ' : ''}${o.items.map(i => `${i.qty} ${i.name}`).join(' · ')} · ${o.status === 'cancelado' ? 'cancelado' : STATUS_FLOW[o.status].label}`,
-          amount: orderTotal(o), onClick: () => setFocus(o.id),
-        }))} />
+      <ViewToggle value={view} onChange={setView} options={['programa', 'hoy', 'semanal', 'historial']} />
+      {view === 'semanal' ? <Fijos /> : view === 'programa' ? (
+        <Programa orders={upcoming} now={now} onOpen={setFocus} onDay={d => { setDay(d); setView('hoy'); }} />
+      ) : view === 'historial' ? (
+        <Timeline today={now} empty="Sin ventas en los últimos 30 días." items={past.map(o => row(o, false))} />
       ) : (
       <Stage>
         <Donut r={14.6} width={2.2} labels={false} parts={bake.map(b => ({ key: b.code, value: b.qty, label: `${b.qty}${b.code}` }))} />
@@ -116,7 +124,7 @@ export function Ventas() {
       </Stage>
       )}
 
-      {bake.length > 0 && view !== 'semanal' && (
+      {bake.length > 0 && view === 'hoy' && (
         <div className="prep" aria-label="Para preparar">
           <span className="eyebrow">para preparar</span>
           {bake.map((b, i) => <span key={b.code} className={'prep-dot s' + (i % 6)}><b>{b.qty}</b>{b.code}</span>)}
@@ -171,5 +179,49 @@ export function Ventas() {
         />
       )}
     </>
+  );
+}
+
+/** La programación: día por día lo que viene, con qué preparar y cada pedido. */
+function Programa({ orders, now, onOpen, onDay }: { orders: Order[]; now: string; onOpen: (id: string) => void; onDay: (d: string) => void }) {
+  const days = [...new Set(orders.map(o => o.date))].sort();
+  const total = orders.reduce((a, o) => a + orderTotal(o), 0);
+  if (!days.length) return <p className="timeline-empty">No hay pedidos por entregar. Anota uno con el campo de abajo o con + en el inicio.</p>;
+  return (
+    <div className="programa">
+      <p className="fijos-sum"><b>{orders.length}</b> pedidos por entregar · <b>{colones(total)}</b></p>
+      {days.map(d => {
+        const list = orders.filter(o => o.date === d);
+        const prep = bakeSummary(list);
+        return (
+          <section key={d} className={'prog-day' + (d === now ? ' today' : '')}>
+            <button className="prog-head" onClick={() => onDay(d)} title="Ver el día en círculo">
+              <strong>{dayLabel(d, now)}</strong>
+              <span>{list.length} {list.length === 1 ? 'pedido' : 'pedidos'} · {colones(list.reduce((a, o) => a + orderTotal(o), 0))}</span>
+            </button>
+            <div className="prep">
+              {prep.map((p, i) => <span key={p.code} className={'prep-dot s' + (i % 6)}><b>{p.qty}</b>{p.code}</span>)}
+            </div>
+            <ul className="prog-list">
+              {list.map(o => (
+                <li key={o.id}>
+                  <button className={'prog-row ' + o.status} onClick={() => onOpen(o.id)}>
+                    <PayMark state={o.pay} size={22} />
+                    <span className="prog-text">
+                      <strong>{o.recurringId ? '↻ ' : ''}{o.client}</strong>
+                      <small>{o.items.map(i => `${i.qty} ${i.name}`).join(' · ')}{o.note ? ` · ${o.note}` : ''}</small>
+                    </span>
+                    <span className="prog-side">
+                      <b>{colones(orderTotal(o))}</b>
+                      <small>{o.status === 'cancelado' ? 'cancelado' : STATUS_FLOW[o.status].label}</small>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        );
+      })}
+    </div>
   );
 }

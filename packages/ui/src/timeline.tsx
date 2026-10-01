@@ -21,9 +21,10 @@ export interface TimelineItem {
   onClick?: () => void;
 }
 
-export function Timeline({ items, today, empty = 'Sin movimientos.' }: { items: TimelineItem[]; today: string; empty?: string }) {
+export function Timeline({ items, today, empty = 'Sin movimientos.', order = 'desc' }: { items: TimelineItem[]; today: string; empty?: string; order?: 'asc' | 'desc' }) {
   if (!items.length) return <p className="timeline-empty">{empty}</p>;
-  const days = [...new Set(items.map(i => i.date))].sort().reverse();
+  const days = [...new Set(items.map(i => i.date))].sort();
+  if (order === 'desc') days.reverse();
   return (
     <div className="timeline">
       {days.map(d => {
@@ -55,19 +56,26 @@ export function Timeline({ items, today, empty = 'Sin movimientos.' }: { items: 
   );
 }
 
-export type ViewMode = 'circulo' | 'historial' | 'semanal';
+export type ViewMode = 'circulo' | 'hoy' | 'proximos' | 'historial' | 'semanal' | 'programa';
 
 /** Interruptor Círculo / Historial, recordado por pantalla en este dispositivo. */
-export function useViewMode(key: string): [ViewMode, (v: ViewMode) => void] {
+export function useViewMode(key: string, options: ViewMode[] = ['circulo', 'historial']): [ViewMode, (v: ViewMode) => void] {
   const k = 'dc-view-' + key;
-  const [v, setV] = useState<ViewMode>(() => { try { return (localStorage.getItem(k) as ViewMode) || 'circulo'; } catch { return 'circulo'; } });
+  const [v, setV] = useState<ViewMode>(() => {
+    let saved: ViewMode | null = null;
+    try { saved = localStorage.getItem(k) as ViewMode | null; } catch { /* sin storage */ }
+    return saved && options.includes(saved) ? saved : options[0];
+  });
   useEffect(() => { try { localStorage.setItem(k, v); } catch { /* sin storage */ } }, [k, v]);
   return [v, setV];
 }
 
 const VIEW_LABEL: Record<ViewMode, { label: string; icon: string }> = {
   circulo: { label: 'Círculo', icon: 'circulo' },
-  historial: { label: 'Historial', icon: 'lista' },
+  hoy: { label: 'Día', icon: 'circulo' },
+  programa: { label: 'Programa', icon: 'proximos' },
+  proximos: { label: 'Próximos', icon: 'proximos' },
+  historial: { label: 'Historial', icon: 'historial' },
   semanal: { label: 'Semanal', icon: 'repetir' },
 };
 

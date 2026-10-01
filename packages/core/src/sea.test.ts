@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SPOTS, compass, goodWindows, hourIndex, parseSea, tideRising, tideTurns, weatherWord, windKind } from './sea';
+import { SPOTS, compass, goodWindows, hourIndex, parseSea, tideAt, tideRising, tideTurns, weatherIcon, weatherWord, windKind, type SeaHour } from './sea';
 
 const spot = SPOTS[0];
 // un día sintético: marea seno con período ~12.4 h, swell 1.2 m, viento del E (offshore) hasta las 11, luego del O (onshore)
@@ -44,5 +44,19 @@ describe('el mar', () => {
 
   it('buenas horas para clases: de día y con offshore', () => {
     expect(goodWindows(r, spot.face)).toEqual([{ date: '2026-10-01', from: '05:00', to: '11:00', swell: 1.2, wind: 'offshore' }]);
+  });
+});
+
+describe('tideAt y weatherIcon', () => {
+  const hs = [{ time: '2026-10-01T10:00', tide: 0 }, { time: '2026-10-01T11:00', tide: 1 }] as SeaHour[];
+  it('interpola la marea entre horas', () => {
+    expect(tideAt(hs, '2026-10-01T10:30')).toBeCloseTo(0.5);
+    expect(tideAt(hs, '2026-10-01T12:00')).toBeNull();
+  });
+  it('elige el ícono del clima', () => {
+    expect(weatherIcon(0)).toBe('sol');
+    expect(weatherIcon(0, true)).toBe('luna');
+    expect(weatherIcon(63)).toBe('lluvia');
+    expect(weatherIcon(95)).toBe('tormenta');
   });
 });

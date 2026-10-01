@@ -3,7 +3,8 @@
    hora con swell, viento, marea, lluvia y temperatura. */
 
 import { useEffect, useState } from 'react';
-import { SPOTS, compass, dayLabel, goodWindows, tideRising, tideTurns, weatherWord, windKind, type SeaHour } from '@dc/core';
+import { SPOTS, compass, dayLabel, goodWindows, tideAt, tideRising, tideTurns, weatherIcon, weatherWord, windKind, type SeaHour } from '@dc/core';
+import { Icon } from '@dc/ui';
 import { HelpDot } from '../HelpDot';
 import { currentSpot, loadSea, nowCR, setSpot, useSea } from '../sea';
 
@@ -16,11 +17,13 @@ function TideCurve({ hours, now, turns }: { hours: SeaHour[]; now: string; turns
   const d = pts.map((h, i) => `${i ? 'L' : 'M'}${x(h.time).toFixed(2)},${y(h.tide!).toFixed(2)}`).join(' ');
   const today = hours[0]?.time.slice(0, 10);
   const showNow = now.slice(0, 10) === today;
+  const level = tideAt(hours, now);
   return (
     <svg className="tide-curve" viewBox="0 0 100 44" role="img" aria-label="Curva de marea del día">
-      <path d={d + ' L100,40 L0,40 Z'} className="tide-fill" />
+      <path d={`${d} L${x(pts[pts.length - 1].time).toFixed(2)},40 L${x(pts[0].time).toFixed(2)},40 Z`} className="tide-fill" />
       <path d={d} className="tide-line" vectorEffect="non-scaling-stroke" />
       {showNow && <line x1={x(now)} x2={x(now)} y1="2" y2="40" className="tide-now" vectorEffect="non-scaling-stroke" />}
+      {showNow && level != null && <circle cx={x(now)} cy={y(level)} r="1.8" className="tide-here" />}
       {turns.filter(t => t.time.startsWith(today)).map(t => (
         <g key={t.time}>
           <circle cx={x(t.time)} cy={y(t.level)} r="1.1" className={'tide-dot ' + t.kind} />
@@ -56,7 +59,8 @@ export function Mar() {
   const windows = goodWindows(report, spot.face).filter(w => w.date >= now.slice(0, 10));
   const rise = info?.sunrise ? Number(info.sunrise.slice(11, 13)) : 5;
   const set = info?.sunset ? Number(info.sunset.slice(11, 13)) : 18;
-  const shown = hours.filter(h => { const hh = Number(h.time.slice(11, 13)); return hh >= rise && hh <= set; });
+  const hh = (h: SeaHour) => Number(h.time.slice(11, 13));
+  const shown = hours.filter(h => hh(h) >= rise && hh(h) <= set);
   const updated = Math.round((Date.now() - new Date(report.at).getTime()) / 60000);
 
   return (
@@ -73,7 +77,7 @@ export function Mar() {
 
       <section className="mar-card">
         <header>
-          <strong>Marea</strong>
+          <strong><Icon name="marea" size={18} /> Marea</strong>
           <span>{turns.filter(t => t.time.startsWith(day)).map(t => `${t.kind} ${t.time.slice(11, 16)}`).join(' · ')}</span>
         </header>
         <TideCurve hours={hours} now={now} turns={turns} />
@@ -86,7 +90,7 @@ export function Mar() {
       </section>
 
       <section className="mar-card">
-        <header><strong>Buenas horas para clases <HelpDot topic="mar" label="Cómo se eligen las buenas horas" /></strong></header>
+        <header><strong><Icon name="ola" size={18} /> Buenas horas para clases <HelpDot topic="mar" label="Cómo se eligen las buenas horas" /></strong></header>
         {windows.length ? (
           <ul className="mar-windows">
             {windows.map(w => (
@@ -112,7 +116,7 @@ export function Mar() {
                 <span className="mh-swell"><b>{h.swell?.toFixed(1) ?? '–'} m</b><small>{h.period ? Math.round(h.period) + 's' : ''} {compass(h.swellDir)}</small></span>
                 <span className={'mh-wind ' + (wk?.good ? 'good' : h.wind != null && h.wind <= 6 ? 'calm' : 'bad')}><b>{h.wind != null ? Math.round(h.wind) : '–'} kn</b><small>{wk?.label ?? ''}</small></span>
                 <span className="mh-tide">{rising == null ? '' : rising ? '↑' : '↓'}</span>
-                <span className="mh-sky"><b>{h.temp != null ? Math.round(h.temp) + '°' : ''}</b><small>{h.rain != null ? h.rain + '%' : ''}</small></span>
+                <span className="mh-sky"><Icon name={weatherIcon(h.code, hh(h) < rise || hh(h) > set)} size={18} /><b>{h.temp != null ? Math.round(h.temp) + '°' : ''}</b><small>{h.rain != null ? h.rain + '%' : ''}</small></span>
               </li>
             );
           })}

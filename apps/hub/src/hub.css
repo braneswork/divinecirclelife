@@ -358,30 +358,37 @@ code { font-size: .85em; word-break: break-all; }
 .prog-row.horneando .prog-side small, .prog-row.listo .prog-side small { color: var(--gold); }
 
 /* ---------- mar (en inicio y su página) ---------- */
-.sea-strip {
-  flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 2px;
-  border: 0; background: none; cursor: pointer; padding: 2px 0 0; max-width: 100%;
+.sea-card {
+  flex: 0 0 auto; width: min(100%, 520px); margin-top: 4px; padding: 10px 14px 10px;
+  border: 1.5px solid var(--line); border-radius: 22px; background: color-mix(in srgb, var(--card) 80%, transparent);
+  display: flex; flex-direction: column; gap: 6px; cursor: pointer; text-align: left; transition: border-color .2s;
 }
-.sea-strip.empty span { font-size: 12px; color: var(--muted); padding: 10px 0; }
-.sea-spot { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .18em; color: var(--muted); }
-.sea-dots { display: flex; gap: 6px; justify-content: center; }
-.sea-dot {
-  --c: #5FA9C4;
-  width: 60px; height: 60px; border-radius: 50%; border: 2px solid var(--c); background: var(--card);
-  display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.05;
-  box-shadow: 0 0 10px color-mix(in srgb, var(--c) 30%, transparent);
+.sea-card:hover { border-color: #5FA9C4; }
+.sea-card.empty { flex-direction: row; align-items: center; justify-content: center; gap: 8px; font-size: 12.5px; color: var(--muted); }
+.sea-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.sea-spot { white-space: nowrap; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .16em; color: var(--muted); }
+.sea-tide-txt { white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: #5FA9C4; }
+.sea-tide { position: relative; height: 46px; margin: 10px 0 16px; }
+.sea-tide svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.sea-now {
+  position: absolute; width: 13px; height: 13px; border-radius: 50%; transform: translate(-50%, -50%);
+  background: var(--gold); border: 2px solid var(--bg); box-shadow: 0 0 0 4px color-mix(in srgb, var(--gold) 30%, transparent);
 }
-.sea-dot b { font-size: 15px; font-weight: 700; }
-.sea-dot small { font-size: 8.5px; color: var(--muted); white-space: nowrap; max-width: 54px; overflow: hidden; text-overflow: ellipsis; }
-.sea-dot em { font-style: normal; font-size: 8px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); white-space: nowrap; max-width: 54px; overflow: hidden; text-overflow: ellipsis; }
-.sea-dot.wind.good { --c: var(--ok); }
-.sea-dot.wind.bad { --c: var(--bad); }
-.sea-dot.tide { --c: #9B7FD1; }
-.sea-dot.sky { --c: #E58A5C; }
-.sea-dot.sun { --c: var(--gold); }
-.sea-strip:hover .sea-dot { transform: translateY(-1px); }
-.sea-dot { transition: transform .2s; }
-@media (max-width: 360px) { .sea-dot { width: 54px; height: 54px; } .sea-dots { gap: 4px; } }
+.sea-turn { position: absolute; transform: translate(-50%, -135%); font-size: 9.5px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.sea-turn.baja { transform: translate(-50%, 35%); }
+.sea-row { display: flex; justify-content: space-between; gap: 6px; }
+.sea-item { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.sea-item > svg { flex: 0 0 auto; }
+.sea-item > span { display: flex; flex-direction: column; line-height: 1.1; min-width: 0; }
+.sea-item b { font-size: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.sea-item small { font-size: 10px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sea-item.swell > svg { color: #5FA9C4; }
+.sea-item.wind.good > svg, .sea-item.wind.good b { color: var(--ok); }
+.sea-item.wind.bad > svg, .sea-item.wind.bad b { color: var(--bad); }
+.sea-item.wind.calm > svg { color: var(--muted); }
+.sea-item.sky > svg { color: #E58A5C; }
+.sea-item.sun > svg { color: var(--gold); }
+@media (max-width: 380px) { .sea-item > svg { width: 18px; height: 18px; } .sea-item { gap: 4px; } .sea-item b { font-size: 13px; } }
 
 .mar { width: 100%; max-width: 620px; display: flex; flex-direction: column; gap: 10px; padding-bottom: 16px; }
 .mar-card { border: 1.5px solid var(--line); border-radius: 18px; background: var(--card); padding: 12px 14px; }
@@ -394,6 +401,7 @@ code { font-size: .85em; word-break: break-all; }
 .tide-line { fill: none; stroke: #5FA9C4; stroke-width: 2; }
 .tide-now { stroke: var(--gold); stroke-width: 1.5; stroke-dasharray: 3 3; }
 .tide-dot { stroke: none; }
+.tide-here { fill: var(--gold); stroke: var(--bg); stroke-width: .6; }
 .tide-dot.alta { fill: #5FA9C4; } .tide-dot.baja { fill: var(--muted); }
 .tide-label { font-size: 3px; fill: var(--fg); font-weight: 600; }
 .tide-axis { font-size: 2.6px; fill: var(--muted); }
@@ -405,7 +413,7 @@ code { font-size: .85em; word-break: break-all; }
 .mar-windows small { color: var(--muted); font-size: 12px; flex-basis: 100%; }
 .mar-hours { list-style: none; margin: 0; padding: 0; }
 .mar-hours li {
-  display: grid; grid-template-columns: 44px 1fr 1fr 18px 50px; align-items: center; gap: 6px;
+  display: grid; grid-template-columns: 44px 1fr 1fr 18px 70px; align-items: center; gap: 6px;
   padding: 6px 4px; border-bottom: 1px dotted var(--line); font-variant-numeric: tabular-nums;
 }
 .mar-hours li:last-child { border-bottom: 0; }
@@ -416,4 +424,5 @@ code { font-size: .85em; word-break: break-all; }
 .mh-time { font-weight: 600; color: var(--muted); font-size: 13px; }
 .mh-wind.good b { color: var(--ok); } .mh-wind.calm b { color: var(--fg); } .mh-wind.bad b { color: var(--bad); }
 .mh-tide { color: #9B7FD1; font-weight: 800; text-align: center; }
-.mh-sky { text-align: right; align-items: flex-end; }
+.mh-sky { display: grid !important; grid-template-columns: auto auto; column-gap: 5px; justify-content: end; align-items: center; text-align: right; }
+.mh-sky svg { grid-row: span 2; color: #E58A5C; }

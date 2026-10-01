@@ -21,7 +21,7 @@ el logo de arriba (o la flecha, o Escape) te devuelve al centro. Abajo, cada íc
 - Cada círculo muestra un dato rápido: por entregar, lo generado este mes, lo que falta cobrar, el balance.
 - Abajo a la derecha **+ entrada**: anotar una venta. Abajo a la izquierda **− salida**: anotar un gasto.
 - Los puntos dorados del anillo exterior son proyectos del ecosistema Branes.
-- Debajo de la flor, **el parte de mar**: swell, viento, marea, clima y atardecer de ahora mismo. Tocarlo abre la página Mar.
+- Debajo de la flor, **el parte de mar**: la curva de marea de hoy con un punto dorado donde está ahora, y con íconos el swell, el viento, el clima y la hora en que se pone el sol. Tocarlo abre la página Mar.
 
 ### Nueva entrada (+) {#entrada}
 - Arriba, la venta rápida: escribe y presiona Enter, por ejemplo `2C 1MS Soleida`.

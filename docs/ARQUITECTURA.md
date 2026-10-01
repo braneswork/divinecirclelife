@@ -81,7 +81,8 @@ Proyecto de Supabase: `vbeubyipzzpfbdjswavh` (URL y clave anon pública en
 `packages/core/src/config.ts`; se pueden reemplazar con `VITE_SUPABASE_URL` y
 `VITE_SUPABASE_ANON_KEY`). Nunca poner la service_role key en el repo.
 
-1. Supabase → SQL Editor: correr `supabase/migrations/0001_circulo.sql` completo.
+1. Supabase → SQL Editor: pegar `supabase/setup.sql` completo y Run (versión limpia y repetible
+   de `migrations/0001_circulo.sql`; se puede correr varias veces).
    Convive con las tablas del hub anterior (`divine_circle_data`, `divine_circle_backups`).
 2. Authentication → Providers: Email activo.
 3. Authentication → URL Configuration: Site URL = la dirección de Vercel del hub, y en

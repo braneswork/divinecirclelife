@@ -1,10 +1,11 @@
 /* Puente con Supabase. Mapea camelCase (app) ↔ snake_case (base de datos).
    Si no hay Supabase o no hay sesión, no hace nada y todo queda en el dispositivo. */
 
-import type { Offering, Order, Project } from '@dc/core';
+import type { Client, Expense, Invoice, Offering, Order, Project } from '@dc/core';
 import { sb } from './supabase';
 
-type Table = 'orders' | 'offerings' | 'projects';
+export type Table = 'orders' | 'offerings' | 'projects' | 'clients' | 'invoices' | 'expenses';
+const TABLES: Table[] = ['projects', 'offerings', 'clients', 'orders', 'invoices', 'expenses'];
 type Row = Record<string, unknown>;
 
 const snake = (k: string) => k.replace(/[A-Z]/g, c => '_' + c.toLowerCase());
@@ -29,7 +30,7 @@ function report(error: { message: string } | null) {
   if (error) { lastError = error.message; console.warn('[sync]', error.message); }
 }
 
-export function pushRow(table: Table, obj: Order | Offering | Project) {
+export function pushRow(table: Table, obj: Order | Offering | Project | Client | Invoice | Expense) {
   void (async () => {
     if (!(await signedIn())) return;
     const { error } = await sb!.from(table).upsert(toRow(obj));
@@ -46,18 +47,12 @@ export function deleteRow(table: Table, id: string) {
 }
 
 /** Trae todo de la nube. Devuelve null si no hay conexión configurada o sesión. */
-export async function pullAll(): Promise<{ orders: Order[]; offerings: Offering[]; projects: Project[] } | null> {
+export async function pullAll(): Promise<Record<Table, { id: string }[]> | null> {
   if (!(await signedIn())) return null;
-  const [o, f, p] = await Promise.all([
-    sb!.from('orders').select('*'),
-    sb!.from('offerings').select('*'),
-    sb!.from('projects').select('*'),
-  ]);
-  const err = o.error ?? f.error ?? p.error;
+  const res = await Promise.all(TABLES.map(t => sb!.from(t).select('*')));
+  const err = res.find(r => r.error)?.error;
   if (err) { report(err); return null; }
-  return {
-    orders: (o.data as Row[]).map(r => fromRow<Order>(r)),
-    offerings: (f.data as Row[]).map(r => fromRow<Offering>(r)),
-    projects: (p.data as Row[]).map(r => fromRow<Project>(r)),
-  };
+  return Object.fromEntries(TABLES.map((t, i) => [t, (res[i].data as Row[]).map(r => fromRow<{ id: string }>(r))])) as Record<Table, { id: string }[]>;
 }
+
+export { TABLES };

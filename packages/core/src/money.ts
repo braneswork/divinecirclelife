@@ -3,10 +3,12 @@ import type { Order, PayState } from './types';
 const fmt = new Intl.NumberFormat('es-CR', { maximumFractionDigits: 0 });
 
 /** ₡4.000 */
-export const colones = (n: number) => '₡' + fmt.format(Math.round(n)).replace(/\s/g, '.');
+export const colones = (n: number) => (n < 0 ? '−' : '') + '₡' + fmt.format(Math.abs(Math.round(n))).replace(/\s/g, '.');
+
+export const lineTotal = (it: Order["items"][number]) => Math.round(it.qty * it.unitPrice * (1 - (it.discount ?? 0)));
 
 export const itemsTotal = (o: Pick<Order, 'items'>) =>
-  o.items.reduce((s, it) => s + it.qty * it.unitPrice, 0);
+  o.items.reduce((s, it) => s + lineTotal(it), 0);
 
 export const orderTotal = (o: Pick<Order, 'items' | 'amountOverride'>) =>
   o.amountOverride ?? itemsTotal(o);
@@ -30,8 +32,8 @@ export const PAY: Record<PayState, { mark: string; label: string; next: PayState
 };
 
 export const STATUS_FLOW: Record<Exclude<Order['status'], 'cancelado'>, { label: string; next: Order['status'] }> = {
-  pendiente: { label: 'por hornear', next: 'horneando' },
-  horneando: { label: 'horneando', next: 'listo' },
+  pendiente: { label: 'por preparar', next: 'horneando' },
+  horneando: { label: 'en proceso', next: 'listo' },
   listo: { label: 'listo', next: 'entregado' },
   entregado: { label: 'entregado', next: 'pendiente' },
 };

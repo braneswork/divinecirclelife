@@ -113,3 +113,14 @@ describe('totales', () => {
     expect(s).toEqual([{ code: 'C', name: 'Campesino', qty: 3 }, { code: 'MS', name: 'Multiseeds', qty: 1 }]);
   });
 });
+
+import { parseExpense } from './expense';
+describe('parseExpense', () => {
+  it('monto, tipo, fecha y nota', () => {
+    expect(parseExpense('25000 super', TODAY)).toEqual({ ok: true, amount: 25000, type: 'super', date: TODAY, note: undefined });
+    expect(parseExpense('12.500 gas @ayer // tanque', TODAY)).toMatchObject({ amount: 12500, type: 'gas', date: '2026-09-30', note: 'tanque' });
+    expect(parseExpense('8000 ingred harina', TODAY)).toMatchObject({ type: 'ingredientes', note: 'harina' });
+    expect(parseExpense('3000 hielo', TODAY)).toMatchObject({ type: 'otros', note: 'hielo' });
+    expect(parseExpense('super', TODAY)).toMatchObject({ ok: false, error: 'sin_monto' });
+  });
+});

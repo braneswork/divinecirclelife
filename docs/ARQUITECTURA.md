@@ -17,21 +17,36 @@ y cada oferta del catálogo puede pertenecer a un pilar (el pan es Food).
 ## Composición
 
 El hub no usa pestañas ni listas: todo es **algo al centro con cosas alrededor**, como el
-símbolo de Divine Circle (un círculo rodeado de seis).
+símbolo de Divine Circle (un círculo que toca a seis). Inspiración visual: la espiral de Doyle
+(anillos de luz con disco interior; cada círculo toca a seis).
 
-- **Inicio (la flor):** hoy al centro, seis módulos alrededor (Pan, Experiencias, Café,
-  Círculo, Catálogo, Ajustes) y los proyectos como satélites en el anillo exterior.
-- **Cada módulo:** su tema al centro y sus elementos en órbita. En Pan, el día al centro,
-  un anillo con lo que hay que hornear y los pedidos orbitando.
-- **Foco:** tocar un elemento lo trae al centro con sus acciones alrededor.
-- **Una sola página:** cada sección ocupa toda la pantalla y cambiar de sección desliza hacia
-  un lado (también con el dedo o las flechas del teclado). El logo regresa al inicio; los puntitos
-  de abajo saltan a cualquier sección.
-- Títulos en Montserrat; Cinzel queda solo en la marca.
+- **Inicio (la flor):** hoy al centro, seis módulos alrededor, cada uno con su ícono y el color
+  de un pilar: Pedidos (Food), Clientes (Family), Caja (Essence), Experiencias (Movement),
+  Círculo (Nature), Catálogo (Wisdom). Ajustes va en el engranaje de arriba.
+- **Entrar en un círculo:** tocarlo lo expande hasta llenar la pantalla; volver (logo, flecha,
+  Escape o atrás del navegador) lo contrae a su lugar. Dentro de un módulo se puede volver a
+  entrar en otro círculo (un cliente, por ejemplo).
+- **Navegación de íconos** abajo: cada círculo dice a dónde lleva.
+- **Dos acomodos:** panal uniforme (`hexCells`) para piezas iguales (clientes, catálogo,
+  experiencias, caja) y espiral de Doyle (`spiralCells`) para lo que tiene peso (los pedidos del
+  día: el más grande va en el círculo más grande).
+- **Foco:** tocar algo lo trae al centro con sus acciones alrededor.
 
-El UI kit vive en `packages/ui` (`Stage`, `Track`, `Bubble`, `around()`, `Donut`, `Focus`,
-`PayMark`, `PillarFlower`, `Pager`, `PageDots`, toasts) y se ve en `apps/kit`.
-Para un módulo nuevo del hub: crear `modules/X.tsx` con esas piezas y agregarlo a `modules/index.ts`.
+El UI kit vive en `packages/ui` (`Stage`, `Bubble`, `hexCells`, `spiralCells`, `Zoom`,
+`IconNav`, `Icon`, `Focus`, `Donut`, `PayMark`, `PillarFlower`, toasts) y se ve en `apps/kit`.
+Para un módulo nuevo del hub: crear `modules/X.tsx` y agregarlo a `modules/index.ts`.
+
+## Plata: clientes, facturas y caja
+
+Tomado de la hoja "Divine Circle 2026":
+- **Clientes** (hoja Sources): forma de cobro `contado` o `mensual` y descuento negociado por
+  producto (Mantarraya: Burger Bun 32 %, Campesino 30 %). Al escribir un pedido con su nombre o
+  alias se enlaza y se aplica el descuento.
+- **Facturas** (hojas Payments/Facturas): pedidos del mes agrupados por producto con subtotal,
+  descuento y total; ajustes (préstamo, abono); recibo correlativo (sigue del 0005). Marcarla
+  pagada deja sus pedidos en ✓. Se imprime o guarda como PDF.
+- **Caja** (hojas Out/Totals): ventas de todo, cobrado ✓, no pagó ✕, crédito +, salidas por
+  tipo (de "Fixed Cost") y balance del mes. Salida rápida: `25000 super // nota`.
 
 ## Modelo
 

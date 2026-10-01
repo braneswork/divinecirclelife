@@ -1,9 +1,9 @@
 /* Catálogo: cada proyecto al centro con sus ofertas orbitando. */
 
 import { useState } from 'react';
-import { ALL_PILLARS, colones, pillarOf, type Offering, type OfferingKind, type PillarId } from '@dc/core';
+import { ALL_PILLARS, CATEGORIES, colones, pillarOf, type Offering, type OfferingKind, type PillarId } from '@dc/core';
 import type { CSSProperties } from 'react';
-import { Bubble, Focus, Stage, Track, around } from '@dc/ui';
+import { Bubble, Focus, Stage, hexCells } from '@dc/ui';
 import { upsertOffering, useStore } from '../store';
 import { useToast } from '@dc/ui';
 
@@ -25,12 +25,12 @@ export function Catalogo() {
 
   const project = projects.find(p => p.id === projectId);
   const list = offerings.filter(o => o.projectId === projectId);
-  const n = list.length + 1;
-  const d = n > 12 ? 12 : 15;
+  // panal uniforme: el proyecto al centro, sus códigos alrededor y el "+" al final
+  const cells = hexCells(list.length + 2);
 
   function open(o: Offering | null) {
     setIsNew(!o);
-    setDraft(o ? { ...o } : { id: crypto.randomUUID(), projectId, kind: 'producto', code: '', name: '', price: 0, active: true, public: false });
+    setDraft(o ? { ...o } : { id: crypto.randomUUID(), projectId, kind: 'producto', code: '', name: '', price: 0, active: true, public: false, category: 'bebidas' });
   }
 
   function save() {
@@ -56,21 +56,19 @@ export function Catalogo() {
       </nav>
 
       <Stage>
-        <Track r={40} dashed />
-        <Bubble d={34} className="core">
+        <Bubble d={cells[0].d} className="core">
           <span className="eyebrow">{project?.ring}</span>
           <strong className="mid">{project?.name}</strong>
-          <span className="small">{list.filter(o => o.active).length} activos · {list.filter(o => o.public).length} en la web</span>
         </Bubble>
         {list.map((o, i) => (
-          <Bubble key={o.id} at={around(i, n, 40)} d={d} className={'offer' + (o.active ? '' : ' off') + (o.public ? ' public' : '')} onClick={() => open(o)} label={o.name} style={{ '--pc': pillarOf(o.pillar)?.color } as CSSProperties}>
+          <Bubble key={o.id} at={cells[i + 1].at} d={cells[i + 1].d} className={'offer' + (o.active ? '' : ' off') + (o.public ? ' public' : '')} onClick={() => open(o)} label={o.name} style={{ '--pc': pillarOf(o.pillar)?.color } as CSSProperties}>
             <strong className="code">{o.code}</strong>
             <span className="small">{colones(o.price)}</span>
           </Bubble>
         ))}
-        <Bubble at={around(list.length, n, 40)} d={d} className="add" onClick={() => open(null)} label="Agregar al catálogo"><span>+</span></Bubble>
+        <Bubble at={cells[list.length + 1].at} d={cells[list.length + 1].d} className="add" onClick={() => open(null)} label="Agregar al catálogo"><span>+</span></Bubble>
       </Stage>
-      <p className="hint">El código es lo que escribes en Pan: <b>2C</b> = 2 Campesino. El color del borde es su pilar; el halo dorado, que sale en la web.</p>
+      <p className="hint">{list.filter(o => o.active).length} activos · {list.filter(o => o.public).length} en la web. El código es lo que escribes en Pedidos: <b>2C</b> = 2 Campesino. El color del borde es su pilar; el halo dorado, que sale en la web.</p>
 
       {draft && (
         <Focus
@@ -87,6 +85,7 @@ export function Catalogo() {
           actions={[
             { label: 'guardar', onClick: save, tone: 'on' },
             { label: pillarOf(draft.pillar)?.name ?? 'sin pilar', onClick: () => setDraft({ ...draft, pillar: nextPillar(draft.pillar) }), title: 'Cambiar pilar' },
+            ...(draft.kind === 'producto' ? [{ label: draft.category ?? 'sin familia', onClick: () => setDraft({ ...draft, category: CATEGORIES[(CATEGORIES.indexOf(draft.category ?? '') + 1) % CATEGORIES.length] }), title: 'Cambiar familia' }] : []),
             { label: draft.kind, onClick: () => setDraft({ ...draft, kind: KINDS[(KINDS.indexOf(draft.kind) + 1) % KINDS.length] }), title: 'Cambiar tipo' },
             { label: draft.active ? 'activo' : 'inactivo', onClick: () => setDraft({ ...draft, active: !draft.active }), tone: draft.active ? 'ok' : 'muted' },
             { label: draft.public ? 'en la web' : 'oculto', onClick: () => setDraft({ ...draft, public: !draft.public }), tone: draft.public ? 'ok' : 'muted' },

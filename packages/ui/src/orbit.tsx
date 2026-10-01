@@ -25,24 +25,27 @@ export function Track({ r, dashed }: { r: number; dashed?: boolean }) {
 }
 
 interface BubbleProps {
+  /** identificador para encontrar la burbuja en el DOM (data-key), p. ej. para volver a ella */
+  dataKey?: string;
   at?: Point;
   /** diámetro en % del stage */
   d: number;
   className?: string;
-  onClick?: () => void;
+  /** recibe la burbuja tocada, para poder entrar en ella con Zoom */
+  onClick?: (el: HTMLElement) => void;
   label?: string;
   children?: ReactNode;
   style?: CSSProperties;
 }
 
-export function Bubble({ at = { x: 50, y: 50 }, d, className = '', onClick, label, children, style }: BubbleProps) {
+export function Bubble({ dataKey, at = { x: 50, y: 50 }, d, className = '', onClick, label, children, style }: BubbleProps) {
   const s = { '--x': at.x, '--y': at.y, '--d': d, ...style } as CSSProperties;
   return onClick ? (
-    <button type="button" className={'bubble ' + className} style={s} onClick={onClick} aria-label={label}>
+    <button type="button" className={'bubble ' + className} style={s} onClick={e => onClick(e.currentTarget)} aria-label={label} data-key={dataKey}>
       {children}
     </button>
   ) : (
-    <div className={'bubble ' + className} style={s} aria-label={label}>{children}</div>
+    <div className={'bubble ' + className} style={s} aria-label={label} data-key={dataKey}>{children}</div>
   );
 }
 
@@ -68,7 +71,7 @@ export function Focus({ center, actions, onClose }: { center: ReactNode; actions
         <Track r={41} dashed />
         <div className="bubble focus-center" style={{ '--x': 50, '--y': 50, '--d': 62 } as CSSProperties}>{center}</div>
         {all.map((a, i) => (
-          <Bubble key={i} at={around(i, all.length, 41, -360 / all.length / 2)} d={19} className={'action ' + (a.tone ?? '')} onClick={a.onClick} label={a.title}>
+          <Bubble key={i} at={around(i, all.length, 41, -360 / all.length / 2)} d={19} className={'action ' + (a.tone ?? '')} onClick={() => a.onClick()} label={a.title}>
             <span>{a.label}</span>
           </Bubble>
         ))}
@@ -79,7 +82,7 @@ export function Focus({ center, actions, onClose }: { center: ReactNode; actions
 }
 
 /** Anillo partido en segmentos proporcionales (p. ej. qué hornear). */
-export function Donut({ parts, r, width = 3.2 }: { parts: { key: string; value: number; label: string }[]; r: number; width?: number }) {
+export function Donut({ parts, r, width = 3.2, labels = true }: { parts: { key: string; value: number; label: string }[]; r: number; width?: number; labels?: boolean }) {
   const total = parts.reduce((s, p) => s + p.value, 0);
   if (!total) return null;
   const gap = parts.length > 1 ? 1.6 : 0; // grados entre segmentos
@@ -102,9 +105,9 @@ export function Donut({ parts, r, width = 3.2 }: { parts: { key: string; value: 
         return (
           <g key={p.key} className={'seg s' + (i % 6)}>
             {full ? <circle cx="50" cy="50" r={r} strokeWidth={width} /> : <path d={arc(from + gap / 2, to - gap / 2)} strokeWidth={width} />}
-            <text x={50 + (r + 5.2) * Math.cos(mid)} y={50 + (r + 5.2) * Math.sin(mid)} textAnchor="middle" dominantBaseline="central">
+            {labels && <text x={50 + (r + 5.2) * Math.cos(mid)} y={50 + (r + 5.2) * Math.sin(mid)} textAnchor="middle" dominantBaseline="central">
               {p.label}
-            </text>
+            </text>}
           </g>
         );
       })}

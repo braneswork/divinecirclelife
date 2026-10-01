@@ -36,7 +36,11 @@ export interface Offering {
   public: boolean;
   /** pilar al que pertenece (pan → food, surf → movement…) */
   pillar?: PillarId;
+  /** familia dentro de los productos: pan, bebidas, café… */
+  category?: string;
 }
+
+export const CATEGORIES = ['pan', 'bebidas', 'café', 'cocina', 'otros'];
 
 /** Flujo del horno, como en el sistema original de Divine. */
 export type OrderStatus = 'pendiente' | 'horneando' | 'listo' | 'entregado' | 'cancelado';
@@ -51,11 +55,17 @@ export interface OrderItem {
   name: string;
   qty: number;
   unitPrice: number;
+  /** descuento negociado con el cliente (0.32 = 32 %), fijado al momento del pedido */
+  discount?: number;
 }
 
 export interface Order {
   id: string;
   client: string;
+  /** cliente registrado (con descuentos y forma de cobro) */
+  clientId?: string;
+  /** factura mensual que lo incluye */
+  invoiceId?: string;
   /** día de entrega, YYYY-MM-DD */
   date: string;
   items: OrderItem[];
@@ -68,4 +78,69 @@ export interface Order {
   source: OrderSource;
   createdAt: string;
   updatedAt: string;
+}
+
+/** contado: paga en cada pedido · mensual: se acumula y se factura a fin de mes */
+export type Billing = 'contado' | 'mensual';
+
+export interface Client {
+  id: string;
+  name: string;
+  /** otros nombres con los que se escribe en pedidos ("manta", "pilo") */
+  aliases?: string[];
+  contact?: string;
+  phone?: string;
+  address?: string;
+  billing: Billing;
+  /** descuento negociado por oferta: offeringId → 0.32 */
+  discounts: Record<string, number>;
+  note?: string;
+  active: boolean;
+}
+
+export interface InvoiceLine {
+  code: string;
+  name: string;
+  qty: number;
+  subtotal: number;
+  discount: number;
+  total: number;
+}
+
+export interface InvoiceAdjustment {
+  label: string;
+  /** negativo resta (préstamo, abono), positivo suma */
+  amount: number;
+}
+
+export interface Invoice {
+  id: string;
+  /** recibo correlativo: 0006 */
+  number: string;
+  clientId: string;
+  client: string;
+  /** mes facturado, YYYY-MM */
+  period: string;
+  date: string;
+  lines: InvoiceLine[];
+  adjustments: InvoiceAdjustment[];
+  orderIds: string[];
+  status: 'abierta' | 'pagada';
+  createdAt: string;
+}
+
+/** Tipos de salida, de la hoja "Fixed Cost". */
+export const EXPENSE_TYPES = [
+  'ingredientes', 'super', 'renta', 'baker / cook', 'delivery', 'librería', 'gas',
+  'ferretería', 'técnico', 'mecánico', 'mantenimiento', 'owner', 'partners', 'comisiones', 'adelanto / bono', 'otros',
+];
+
+export interface Expense {
+  id: string;
+  date: string;
+  type: string;
+  amount: number;
+  note?: string;
+  method?: string;
+  createdAt: string;
 }

@@ -51,6 +51,24 @@ create table public.offerings (
   active     boolean not null default true,
   public     boolean not null default false,
   pillar     text check (pillar in ('essence', 'wisdom', 'imagination', 'movement', 'nature', 'family', 'food')),
+  category   text,
+  created_at timestamptz not null default now()
+);
+
+-- ---------------------------------------------------------------- clientes
+-- billing: contado (paga en cada pedido) o mensual (se factura a fin de mes).
+-- discounts: descuento negociado por oferta, {"pan-bb": 0.32, "pan-c": 0.30}.
+create table public.clients (
+  id         text primary key,
+  name       text not null,
+  aliases    text[] not null default '{}',
+  contact    text,
+  phone      text,
+  address    text,
+  billing    text not null default 'contado' check (billing in ('contado', 'mensual')),
+  discounts  jsonb not null default '{}'::jsonb,
+  note       text,
+  active     boolean not null default true,
   created_at timestamptz not null default now()
 );
 
@@ -60,6 +78,8 @@ create table public.offerings (
 create table public.orders (
   id              uuid primary key default gen_random_uuid(),
   client          text not null,
+  client_id       text references public.clients on delete set null,
+  invoice_id      uuid,
   phone           text,
   date            date not null,
   items           jsonb not null default '[]'::jsonb,
@@ -73,12 +93,43 @@ create table public.orders (
   updated_at      timestamptz not null default now()
 );
 create index orders_date_idx on public.orders (date);
+create index orders_client_idx on public.orders (client_id, date);
+
+-- ---------------------------------------------------------------- facturas mensuales
+create table public.invoices (
+  id          uuid primary key,
+  number      text not null unique,
+  client_id   text not null references public.clients,
+  client      text not null,
+  period      text not null,
+  date        date not null,
+  lines       jsonb not null default '[]'::jsonb,
+  adjustments jsonb not null default '[]'::jsonb,
+  order_ids   uuid[] not null default '{}',
+  status      text not null default 'abierta' check (status in ('abierta', 'pagada')),
+  created_at  timestamptz not null default now()
+);
+
+-- ---------------------------------------------------------------- salidas
+create table public.expenses (
+  id         uuid primary key,
+  date       date not null,
+  type       text not null,
+  amount     integer not null check (amount >= 0),
+  note       text,
+  method     text,
+  created_at timestamptz not null default now()
+);
+create index expenses_date_idx on public.expenses (date);
 
 -- ---------------------------------------------------------------- RLS
 alter table public.members   enable row level security;
 alter table public.projects  enable row level security;
 alter table public.offerings enable row level security;
 alter table public.orders    enable row level security;
+alter table public.clients   enable row level security;
+alter table public.invoices  enable row level security;
+alter table public.expenses  enable row level security;
 
 create policy "members: cada quien se ve" on public.members
   for select using (user_id = auth.uid() or public.is_member());
@@ -96,6 +147,12 @@ create policy "offerings: equipo gestiona" on public.offerings
   for all using (public.is_member()) with check (public.is_member());
 
 create policy "orders: solo equipo" on public.orders
+  for all using (public.is_member()) with check (public.is_member());
+create policy "clients: solo equipo" on public.clients
+  for all using (public.is_member()) with check (public.is_member());
+create policy "invoices: solo equipo" on public.invoices
+  for all using (public.is_member()) with check (public.is_member());
+create policy "expenses: solo equipo" on public.expenses
   for all using (public.is_member()) with check (public.is_member());
 
 -- ---------------------------------------------------------------- pedidos desde la web
@@ -144,13 +201,21 @@ insert into public.projects (id, slug, name, ring, branes, tagline) values
   ('take-off', 'take-off', 'Take Off Surf School', 'aliado', true, 'Clases de surf'),
   ('branes', 'branes', 'Branes', 'aliado', true, 'Coworking y comunidad');
 
-insert into public.offerings (id, project_id, kind, code, name, price, public, pillar) values
-  ('pan-c',   'divine-circle', 'producto', 'C',   'Campesino',     4000, true, 'food'),
-  ('pan-ms',  'divine-circle', 'producto', 'MS',  'Multiseeds',    5000, true, 'food'),
-  ('pan-cu',  'divine-circle', 'producto', 'CU',  'Cuadrado',      4000, true, 'food'),
-  ('pan-bag', 'divine-circle', 'producto', 'BAG', 'Baguette',      1000, true, 'food'),
-  ('pan-cr',  'divine-circle', 'producto', 'CR',  'Cinnamon Roll', 1500, true, 'food'),
-  ('pan-bb',  'divine-circle', 'producto', 'BB',  'Burger Bun',     700, true, 'food'),
-  ('pan-cia', 'divine-circle', 'producto', 'CIA', 'Ciabatta',      1000, true, 'food'),
-  ('pan-pz',  'divine-circle', 'producto', 'PZ',  'Pizza',         4000, true, 'food'),
-  ('pan-pzf', 'divine-circle', 'producto', 'PZF', 'Pizza Frozen',  3000, true, 'food');
+insert into public.offerings (id, project_id, kind, code, name, price, public, pillar, category) values
+  ('pan-c',   'divine-circle', 'producto', 'C',   'Campesino',     4000, true, 'food', 'pan'),
+  ('pan-ms',  'divine-circle', 'producto', 'MS',  'Multiseeds',    5000, true, 'food', 'pan'),
+  ('pan-cu',  'divine-circle', 'producto', 'CU',  'Cuadrado',      4000, true, 'food', 'pan'),
+  ('pan-bag', 'divine-circle', 'producto', 'BAG', 'Baguette',      1000, true, 'food', 'pan'),
+  ('pan-cr',  'divine-circle', 'producto', 'CR',  'Cinnamon Roll', 1500, true, 'food', 'pan'),
+  ('pan-bb',  'divine-circle', 'producto', 'BB',  'Burger Bun',     700, true, 'food', 'pan'),
+  ('pan-cia', 'divine-circle', 'producto', 'CIA', 'Ciabatta',      1000, true, 'food', 'pan'),
+  ('pan-pz',  'divine-circle', 'producto', 'PZ',  'Pizza',         4000, true, 'food', 'pan'),
+  ('pan-pzf', 'divine-circle', 'producto', 'PZF', 'Pizza Frozen',  3000, true, 'food', 'pan');
+
+insert into public.clients (id, name, aliases, contact, address, billing, discounts) values
+  ('mantarraya', 'Mantarraya Café', '{mantarraya,manta}', 'Pilo Mora', 'Playa Hermosa', 'mensual', '{"pan-bb": 0.32, "pan-c": 0.30}'),
+  ('chez-coco', 'Chez Coco', '{}', 'Nico', null, 'contado', '{}'),
+  ('batik', 'Batik', '{}', 'Sammy', null, 'contado', '{}'),
+  ('take-off', 'Take Off', '{}', 'Jesus Zabala', null, 'contado', '{}'),
+  ('traveland', 'Traveland', '{}', 'Erick Vega', null, 'contado', '{}'),
+  ('villas-argan', 'Villas Argan', '{}', 'Azzurra Daga', null, 'contado', '{}');

@@ -1,12 +1,13 @@
-/* Pan: el día al centro, un anillo con lo que hay que hornear,
-   y los pedidos orbitando. Tocar un pedido lo trae al centro. */
+/* Pedidos: el día al centro, un anillo con lo que hay que preparar
+   (pan, jugos, café…) y los pedidos orbitando. Tocar un pedido lo trae al centro.
+   El pan se hornea por tandas: los días de horno muestran todo lo que va. */
 
 import { useMemo, useRef, useState } from 'react';
 import {
-  PAY, QUICK_ERRORS, STATUS_FLOW, addDays, bakeSummary, colones, dayLabel, fromISODate, orderTotal, parseQuick, payTotals,
+  PAY, QUICK_ERRORS, matchClient, STATUS_FLOW, addDays, bakeSummary, colones, dayLabel, fromISODate, orderTotal, parseQuick, payTotals,
   type Order,
 } from '@dc/core';
-import { Bubble, Donut, Focus, PayMark, Stage, Track, around, useToast } from '@dc/ui';
+import { Bubble, Donut, Focus, PayMark, Stage, spiralCells, useToast } from '@dc/ui';
 import { removeOrder, restoreOrder, saveOrder, today, updateOrder, useStore } from '../store';
 
 /** Texto rápido de un pedido para editarlo escribiendo (la fecha se conserva sola). */
@@ -14,19 +15,10 @@ const toQuickText = (o: Order) =>
   [o.items.map(i => `${i.qty}${i.code}`).join(' '), o.client, o.amountOverride != null ? String(o.amountOverride) : '']
     .filter(Boolean).join(' ') + (o.note ? ` // ${o.note}` : '');
 
-/** Reparte los pedidos (más el "+") en una o dos órbitas según cuántos haya. */
-function layout(n: number) {
-  if (n <= 11) return Array.from({ length: n + 1 }, (_, i) => ({ at: around(i, n + 1, 40), d: 16 }));
-  const outer = Math.ceil((n + 1) / 2);
-  return Array.from({ length: n + 1 }, (_, i) =>
-    i < outer
-      ? { at: around(i, outer, 43.5), d: 11.5 }
-      : { at: around(i - outer, n + 1 - outer, 34.5, 180 / (n + 1 - outer)), d: 11.5 });
-}
-
-export function Pan() {
+export function Pedidos() {
   const orders = useStore(s => s.orders);
   const offerings = useStore(s => s.offerings);
+  const clients = useStore(s => s.clients);
   const toast = useToast();
   const now = today();
   const [day, setDay] = useState(now);
@@ -47,7 +39,9 @@ export function Pan() {
   const t = payTotals(dayOrders);
   const week = Array.from({ length: 7 }, (_, i) => addDays(now, i));
   const countOn = (d: string) => orders.filter(o => o.date === d && o.status !== 'cancelado').length;
-  const spots = layout(dayOrders.length);
+  // espiral de Doyle: del pedido más chico (adentro) al más grande (afuera)
+  const bySize = [...dayOrders].sort((a, b) => orderTotal(a) - orderTotal(b));
+  const cells = spiralCells(bySize.length, { hole: 16, rotate: -90 });
   const focused = orders.find(o => o.id === focus);
 
   function submit(e: React.FormEvent) {
@@ -88,31 +82,35 @@ export function Pan() {
       </nav>
 
       <Stage>
-        <Track r={dayOrders.length > 11 ? 43.5 : 40} dashed />
-        <Donut r={21} parts={bake.map(b => ({ key: b.code, value: b.qty, label: `${b.qty}${b.code}` }))} />
-        <Bubble d={33} className="core">
+        <Donut r={14.6} width={2.2} labels={false} parts={bake.map(b => ({ key: b.code, value: b.qty, label: `${b.qty}${b.code}` }))} />
+        <Bubble d={26} className="core">
           <span className="eyebrow">{dayLabel(day, now)}</span>
           <strong className="big">{live.length}</strong>
-          <span className="small">{live.length === 1 ? 'pedido' : 'pedidos'} · {colones(t.total)}</span>
+          <span className="small">{colones(t.total)}</span>
           {t.pending > 0 && <span className="small warn">✕ {colones(t.pending)}</span>}
           {t.credit > 0 && <span className="small credit">+ {colones(t.credit)}</span>}
         </Bubble>
-        {dayOrders.map((o, i) => (
-          <Bubble key={o.id} at={spots[i].at} d={spots[i].d} className={'order ' + o.status + (editing === o.id ? ' editing' : '')} onClick={() => setFocus(o.id)} label={o.client}>
+        {bySize.map((o, i) => (
+          <Bubble key={o.id} at={cells[i].at} d={cells[i].d} className={'order ' + o.status + (editing === o.id ? ' editing' : '')} onClick={() => setFocus(o.id)} label={o.client}>
             <strong>{o.client.split(' ')[0]}</strong>
-            <span className="small">{o.items.map(it => `${it.qty}${it.code}`).join(' ')}</span>
-            <PayMark state={o.pay} size={spots[i].d > 12 ? 20 : 16} />
+            {cells[i].d > 9 && <span className="small">{o.items.map(it => `${it.qty}${it.code}`).join(' ')}</span>}
+            <PayMark state={o.pay} size={cells[i].d > 12 ? 20 : 14} />
+            {clients.find(c => c.id === o.clientId)?.billing === 'mensual' && <i className="bill-tag" title={o.invoiceId ? 'facturado' : 'cobro mensual'}>{o.invoiceId ? 'F' : 'M'}</i>}
             {o.source === 'web' && <i className="web" aria-label="desde la web" />}
           </Bubble>
         ))}
-        <Bubble at={spots[dayOrders.length].at} d={spots[dayOrders.length].d} className="add" onClick={() => inputRef.current?.focus()} label="Nuevo pedido">
-          <span>+</span>
-        </Bubble>
       </Stage>
 
+      {bake.length > 0 && (
+        <div className="prep" aria-label="Para preparar">
+          <span className="eyebrow">para preparar</span>
+          {bake.map((b, i) => <span key={b.code} className={'prep-dot s' + (i % 6)}><b>{b.qty}</b>{b.code}</span>)}
+        </div>
+      )}
+
       <div className="legend-row">
-        <span><i className="ring-legend" />por hornear</span>
-        <span><i className="ring-legend horneando" />horneando</span>
+        <span><i className="ring-legend" />por preparar</span>
+        <span><i className="ring-legend horneando" />en proceso</span>
         <span><i className="ring-legend listo" />listo</span>
         <span><i className="ring-legend entregado" />entregado</span>
         <span><PayMark state="paid" size={14} /><PayMark state="pending" size={14} /><PayMark state="credit" size={14} /></span>
@@ -132,7 +130,7 @@ export function Pan() {
       </form>
       <p className={'hint' + (text.trim() && !parsed.ok ? ' bad' : '')} aria-live="polite">
         {parsed.ok
-          ? <><b>{parsed.client}</b> · {parsed.lines.map(l => `${l.qty} ${l.offering.name}`).join(', ')} · {colones(parsed.amountOverride ?? parsed.lines.reduce((s, l) => s + l.qty * l.offering.price, 0))} · {dayLabel(parsed.date, now)} · {PAY[parsed.pay].mark} {PAY[parsed.pay].label}</>
+          ? <><b>{matchClient(parsed.client, clients)?.name ?? parsed.client}</b>{matchClient(parsed.client, clients)?.billing === 'mensual' ? ' (mensual)' : ''} · {parsed.lines.map(l => `${l.qty} ${l.offering.name}`).join(', ')} · {colones(parsed.amountOverride ?? parsed.lines.reduce((s, l) => s + l.qty * l.offering.price, 0))} · {dayLabel(parsed.date, now)} · {PAY[parsed.pay].mark} {PAY[parsed.pay].label}</>
           : text.trim()
             ? QUICK_ERRORS[parsed.error] + (parsed.detail ? `: ${parsed.detail}` : '')
             : <>{offerings.filter(o => o.active && o.kind === 'producto').map(o => <span key={o.id}><b>{o.code}</b> {o.name} </span>)}· <b>@vie</b> fecha · <b>//</b> nota · <b>pagado</b> · <b>credito</b></>}

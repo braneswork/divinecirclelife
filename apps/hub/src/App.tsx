@@ -1,27 +1,47 @@
-import { useCallback, useEffect, useState } from 'react';
-import { PageDots, Pager, type PageDef } from '@dc/ui';
+/* El hub: la flor de inicio siempre debajo; tocar un círculo lo expande
+   hasta llenar la pantalla y uno entra en él. Volver lo contrae a su lugar. */
+
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Icon, IconNav, Zoom, originOf, type Origin } from '@dc/ui';
 import logo from '@dc/brand/assets/logo-light.png';
 import { sb } from './supabase';
 import { syncNow } from './cloud';
-import { MODULES } from './modules';
+import { AJUSTES, MODULES, type ModuleId } from './modules';
 import { Home } from './modules/Home';
 
-/* Una sola página: inicio + seis módulos, uno al lado del otro. */
-const PAGES: PageDef[] = [
-  { id: '', label: 'Inicio', render: () => <Home /> },
-  ...MODULES.map(m => ({ id: m.id, label: m.label, render: () => <m.view /> })),
-];
-
-const indexFromHash = () => Math.max(0, PAGES.findIndex(p => p.id === location.hash.slice(1)));
+type Open = { id: ModuleId; from?: Origin; closing?: boolean } | null;
+const ALL = [...MODULES, AJUSTES];
+const fromHash = () => ALL.find(m => m.id === location.hash.slice(1))?.id;
 
 export function App() {
-  const [index, setIndex] = useState(indexFromHash);
+  const main = useRef<HTMLElement>(null);
+  const [open, setOpen] = useState<Open>(() => { const id = fromHash(); return id ? { id } : null; });
 
-  useEffect(() => {
-    const onHash = () => setIndex(indexFromHash());
-    addEventListener('hashchange', onHash);
-    return () => removeEventListener('hashchange', onHash);
+  const petal = (id: string) => main.current?.querySelector(`[data-key="${id}"]`) ?? null;
+
+  const enter = useCallback((id: ModuleId, el?: Element | null) => {
+    setOpen({ id, from: originOf(el ?? petal(id), main.current) });
+    if (location.hash.slice(1) !== id) history.pushState(null, '', '#' + id);
   }, []);
+
+  const leave = useCallback(() => {
+    setOpen(o => (o && !o.closing ? { ...o, from: originOf(petal(o.id), main.current) ?? o.from, closing: true } : o));
+    if (location.hash) history.pushState(null, '', location.pathname + location.search);
+  }, []);
+
+  // atrás / adelante del navegador
+  useEffect(() => {
+    const onPop = () => { const id = fromHash(); if (id) enter(id); else leave(); };
+    addEventListener('popstate', onPop);
+    return () => removeEventListener('popstate', onPop);
+  }, [enter, leave]);
+
+  // Escape vuelve al centro (si no hay un foco abierto, que se cierra primero)
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => { if (e.key === 'Escape' && !document.querySelector('.focus, .zoom .zoom')) leave(); };
+    addEventListener('keydown', k);
+    return () => removeEventListener('keydown', k);
+  }, [leave]);
 
   useEffect(() => {
     void syncNow();
@@ -30,23 +50,37 @@ export function App() {
     return () => data.subscription.unsubscribe();
   }, []);
 
-  const go = useCallback((i: number) => {
-    const id = PAGES[i].id;
-    if (id) location.hash = id;
-    else history.pushState(null, '', location.pathname + location.search);
-    setIndex(i);
-  }, []);
+  const current = open && !open.closing ? ALL.find(m => m.id === open.id) : undefined;
+  const View = open ? ALL.find(m => m.id === open.id)!.view : null;
 
   return (
     <div className="shell">
       <header className="head">
-        <a href="#" className="home-logo" onClick={e => { e.preventDefault(); go(0); }} aria-label="Divine Circle · inicio">
+        <button className="home-logo" onClick={leave} aria-label="Divine Circle · volver al centro">
           <img src={logo} alt="Divine Circle" />
-        </a>
-        <h1 className="page-title">{index === 0 ? 'Hub' : PAGES[index].label}</h1>
+        </button>
+        <h1 className="page-title">{current ? current.label : 'Hub'}</h1>
+        <button className={'head-gear' + (current?.id === 'ajustes' ? ' on' : '')} onClick={e => enter('ajustes', e.currentTarget)} aria-label="Ajustes">
+          <Icon name="ajustes" size={20} />
+        </button>
       </header>
-      <Pager pages={PAGES} index={index} onIndex={go} />
-      <PageDots pages={PAGES} index={index} onIndex={go} />
+
+      <main className="main" ref={main}>
+        <div className={'home-layer' + (current ? ' behind' : '')} inert={!!current}>
+          <Home onEnter={enter} />
+        </div>
+        {open && View && (
+          <Zoom key={open.id} from={open.from} closing={open.closing} onClosed={() => setOpen(null)} label={ALL.find(m => m.id === open.id)!.label} tone={ALL.find(m => m.id === open.id)!.tone}>
+            <View />
+          </Zoom>
+        )}
+      </main>
+
+      <IconNav
+        items={[{ id: 'inicio', label: 'Inicio', icon: 'inicio' }, ...MODULES.map(m => ({ id: m.id, label: m.short ?? m.label, icon: m.icon }))]}
+        active={current?.id ?? (open ? '' : 'inicio')}
+        onPick={(id, el) => (id === 'inicio' ? leave() : enter(id as ModuleId, el))}
+      />
     </div>
   );
 }

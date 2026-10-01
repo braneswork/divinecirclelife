@@ -4,7 +4,7 @@ import '@dc/brand/tokens.css';
 import '@dc/ui/ui.css';
 import './kit.css';
 import { ESSENCE, MOTTO, PHILOSOPHY, PILLARS, type PayState, type PillarId } from '@dc/core';
-import { Bubble, Donut, Focus, PayMark, PillarFlower, Stage, Track, ToastProvider, around, useToast } from '@dc/ui';
+import { Bubble, Donut, Focus, PayMark, PillarFlower, Stage, Track, ToastProvider, around, hexCells, spiralCells, useToast } from '@dc/ui';
 import logo from '@dc/brand/assets/logo-light.png';
 import mark from '@dc/brand/assets/mark.png';
 
@@ -36,7 +36,7 @@ function Kit() {
         <img src={logo} alt="Divine Circle" className="kit-logo" />
         <p className="page-title">UI kit</p>
         <nav className="kit-nav">
-          {['pilares', 'color', 'tipo', 'orbita', 'pago', 'estados', 'foco'].map(s => <a key={s} href={'#' + s}>{s}</a>)}
+          {['pilares', 'color', 'tipo', 'orbita', 'panal', 'pago', 'estados', 'foco'].map(s => <a key={s} href={'#' + s}>{s}</a>)}
         </nav>
       </header>
 
@@ -79,6 +79,22 @@ function Kit() {
             ))}
             <Bubble at={around(5, 6, 40)} d={16} className="add" onClick={() => toast('Bubble.add')}><span>+</span></Bubble>
           </Stage>
+        </div>
+      </Section>
+
+      <Section id="panal" title="Panal y espiral" note="Uniforme (hexCells): piezas iguales, cada una toca a seis. Espiral de Doyle (spiralCells): crecen hacia afuera, para lo que tiene peso.">
+        <div className="kit-pair">
+          <div className="kit-stage small">
+            <Stage fit={false}>
+              {hexCells(19).map((c, i) => <Bubble key={i} at={c.at} d={c.d} className={i ? '' : 'core'} style={{ '--tone': [ESSENCE, ...PILLARS][i % 7].color } as React.CSSProperties} />)}
+            </Stage>
+          </div>
+          <div className="kit-stage small">
+            <Stage fit={false}>
+              <Bubble d={26} className="core"><span className="small">centro</span></Bubble>
+              {spiralCells(24, { hole: 14 }).map((c, i) => <Bubble key={i} at={c.at} d={c.d} style={{ '--tone': PILLARS[i % 6].color } as React.CSSProperties} />)}
+            </Stage>
+          </div>
         </div>
       </Section>
 

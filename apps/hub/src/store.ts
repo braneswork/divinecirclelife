@@ -4,8 +4,8 @@
 
 import { useSyncExternalStore } from 'react';
 import {
-  SEED_CLIENTS, SEED_EXPERIENCES, SEED_OFFERINGS, SEED_PROJECTS, matchClient, toISODate,
-  type Client, type Expense, type Invoice, type Offering, type Order, type PayState, type Project, type QuickLine,
+  SEED_CLIENTS, SEED_EXPERIENCES, SEED_OFFERINGS, SEED_PROJECTS, addDays, materialize, matchClient, removableFuture, toISODate,
+  type Client, type Expense, type Invoice, type Offering, type Order, type PayState, type Project, type QuickLine, type Recurring,
 } from '@dc/core';
 import { pushRow, deleteRow, type Table } from './sync';
 
@@ -16,6 +16,7 @@ export interface State {
   clients: Client[];
   invoices: Invoice[];
   expenses: Expense[];
+  recurring: Recurring[];
 }
 
 const KEY = 'divine-circle-hub-v2';
@@ -34,6 +35,7 @@ const migrate = (s: State): State => ({
   }),
   invoices: s.invoices ?? [],
   expenses: s.expenses ?? [],
+  recurring: s.recurring ?? [],
   orders: s.orders.map(o => {
     const old = o as Order & { paid?: boolean };
     if (old.pay) return o;
@@ -47,7 +49,7 @@ function load(): State {
     const raw = localStorage.getItem(KEY);
     if (raw) return migrate(JSON.parse(raw) as State);
   } catch { /* storage bloqueado o dañado: arrancamos limpio */ }
-  return { orders: [], offerings: [...SEED_OFFERINGS, ...SEED_EXPERIENCES], projects: SEED_PROJECTS, clients: SEED_CLIENTS, invoices: [], expenses: [] };
+  return { orders: [], offerings: [...SEED_OFFERINGS, ...SEED_EXPERIENCES], projects: SEED_PROJECTS, clients: SEED_CLIENTS, invoices: [], expenses: [], recurring: [] };
 }
 
 let state: State = load();
@@ -94,6 +96,8 @@ export interface NewOrder {
   amountOverride?: number;
   pay: PayState;
   note?: string;
+  /** volverlo pedido fijo semanal (el día de la semana de `date`) */
+  weekly?: boolean;
 }
 
 export function saveOrder(input: NewOrder, replaceId?: string): Order {
@@ -121,8 +125,19 @@ export function saveOrder(input: NewOrder, replaceId?: string): Order {
     createdAt: prev?.createdAt ?? now(),
     updatedAt: now(),
   };
+  if (input.weekly && !prev?.recurringId) {
+    const r: Recurring = {
+      id: crypto.randomUUID(), client: order.client, clientId: order.clientId,
+      items: input.lines.map(l => ({ offeringId: l.offering.id, qty: l.qty })),
+      weekdays: [new Date(order.date + 'T12:00').getDay()], every: 1, start: order.date,
+      pay: 'pending', note: input.note, active: true, skips: [], createdAt: now(),
+    };
+    order.recurringId = r.id;
+    upsert('recurring', r);
+  }
   commit({ ...state, orders: prev ? state.orders.map(o => (o.id === order.id ? order : o)) : [...state.orders, order] });
   pushRow('orders', order);
+  if (input.weekly) ensureRecurring();
   return order;
 }
 
@@ -137,12 +152,17 @@ export function updateOrder(id: string, patch: Partial<Order>) {
 
 export function removeOrder(id: string): Order | undefined {
   const gone = state.orders.find(o => o.id === id);
+  // si venía de un fijo, ese día queda saltado para que no se vuelva a generar
+  const r = gone?.recurringId ? state.recurring.find(x => x.id === gone.recurringId) : undefined;
+  if (r && !r.skips.includes(gone!.date)) upsert('recurring', { ...r, skips: [...r.skips, gone!.date] });
   commit({ ...state, orders: state.orders.filter(o => o.id !== id) });
   if (gone) deleteRow('orders', id);
   return gone;
 }
 
 export function restoreOrder(order: Order) {
+  const r = order.recurringId ? state.recurring.find(x => x.id === order.recurringId) : undefined;
+  if (r) upsert('recurring', { ...r, skips: r.skips.filter(d => d !== order.date) });
   commit({ ...state, orders: [...state.orders, order] });
   pushRow('orders', order);
 }
@@ -152,6 +172,15 @@ export function restoreOrder(order: Order) {
 export const upsertOffering = (o: Offering) => upsert('offerings', o);
 export const upsertProject = (p: Project) => upsert('projects', p);
 export const upsertClient = (c: Client) => upsert('clients', c);
+
+/** Borra un cliente sin facturas. Sus ventas y fijos conservan el nombre, sin el enlace. */
+export function removeClient(c: Client): 'ok' | 'tiene-facturas' {
+  if (state.invoices.some(i => i.clientId === c.id)) return 'tiene-facturas';
+  for (const o of state.orders.filter(x => x.clientId === c.id)) updateOrder(o.id, { clientId: undefined });
+  for (const r of state.recurring.filter(x => x.clientId === c.id)) upsert('recurring', { ...r, clientId: undefined });
+  remove('clients', c.id);
+  return 'ok';
+}
 export const upsertExpense = (e: Expense) => upsert('expenses', e);
 export const removeExpense = (id: string) => remove('expenses', id);
 
@@ -180,6 +209,43 @@ export function clearLocal() {
   try {
     for (const k of Object.keys(localStorage)) if (k.startsWith('divine-circle') || k.startsWith('dc-') || k.startsWith('sb-')) localStorage.removeItem(k);
   } catch { /* sin storage */ }
-  commit({ orders: [], offerings: [...SEED_OFFERINGS, ...SEED_EXPERIENCES], projects: SEED_PROJECTS, clients: SEED_CLIENTS, invoices: [], expenses: [] });
+  commit({ orders: [], offerings: [...SEED_OFFERINGS, ...SEED_EXPERIENCES], projects: SEED_PROJECTS, clients: SEED_CLIENTS, invoices: [], expenses: [], recurring: [] });
   try { localStorage.removeItem(KEY); } catch { /* nada */ }
+}
+
+// ---------------------------------------------------------------- pedidos fijos
+
+/** Días hacia adelante en los que los fijos ya tienen su venta creada. */
+export const RECURRING_DAYS = 14;
+
+/** Crea las ventas de los fijos que falten de hoy a dos semanas. */
+export function ensureRecurring() {
+  const created = materialize({
+    recurring: state.recurring, orders: state.orders, offerings: state.offerings, clients: state.clients,
+    from: today(), to: addDays(today(), RECURRING_DAYS - 1), now: now(), newId: () => crypto.randomUUID(),
+  });
+  if (!created.length) return;
+  commit({ ...state, orders: [...state.orders, ...created] });
+  created.forEach(o => pushRow('orders', o));
+}
+
+/** Quita las ventas futuras aún intactas de un fijo (para regenerarlas o al pausar/borrar). */
+function clearFuture(recurringId: string) {
+  const gone = removableFuture(state.orders, recurringId, today());
+  if (!gone.length) return;
+  const ids = new Set(gone.map(o => o.id));
+  commit({ ...state, orders: state.orders.filter(o => !ids.has(o.id)) });
+  gone.forEach(o => deleteRow('orders', o.id));
+}
+
+export function saveRecurring(r: Recurring) {
+  const existed = state.recurring.some(x => x.id === r.id);
+  if (existed) clearFuture(r.id);
+  upsert('recurring', r);
+  ensureRecurring();
+}
+
+export function removeRecurring(r: Recurring) {
+  clearFuture(r.id);
+  remove('recurring', r.id);
 }

@@ -9,6 +9,7 @@ import {
 } from '@dc/core';
 import { Bubble, Donut, Focus, PayMark, Stage, Timeline, ViewToggle, spiralCells, useToast, useViewMode } from '@dc/ui';
 import { HelpDot } from '../HelpDot';
+import { Fijos, FijoSheet } from './Fijos';
 import { removeOrder, restoreOrder, saveOrder, today, updateOrder, useStore } from '../store';
 
 /** Texto rápido de un pedido para editarlo escribiendo (la fecha se conserva sola). */
@@ -28,6 +29,8 @@ export function Ventas() {
   const [focus, setFocus] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [view, setView] = useViewMode('ventas');
+  const recurring = useStore(s => s.recurring);
+  const [fijo, setFijo] = useState<string | null>(null);
 
   const editingDate = editing ? orders.find(o => o.id === editing)?.date : undefined;
   const parsed = useMemo(() => parseQuick(text, offerings, now, editingDate ?? now), [text, offerings, now, editingDate]);
@@ -83,11 +86,11 @@ export function Ventas() {
         <button className="bead nav" onClick={() => setDay(addDays(day, 1))} aria-label="Día siguiente">›</button>
       </nav>
 
-      <ViewToggle value={view} onChange={setView} />
-      {view === 'historial' ? (
+      <ViewToggle value={view} onChange={setView} options={['circulo', 'historial', 'semanal']} />
+      {view === 'semanal' ? <Fijos /> : view === 'historial' ? (
         <Timeline today={now} empty="Sin ventas este día." items={dayOrders.map(o => ({
           id: o.id, date: o.date, mark: o.pay, muted: o.status === 'cancelado',
-          title: o.client, detail: `${o.items.map(i => `${i.qty} ${i.name}`).join(' · ')} · ${o.status === 'cancelado' ? 'cancelado' : STATUS_FLOW[o.status].label}`,
+          title: o.client, detail: `${o.recurringId ? '↻ ' : ''}${o.items.map(i => `${i.qty} ${i.name}`).join(' · ')} · ${o.status === 'cancelado' ? 'cancelado' : STATUS_FLOW[o.status].label}`,
           amount: orderTotal(o), onClick: () => setFocus(o.id),
         }))} />
       ) : (
@@ -107,12 +110,13 @@ export function Ventas() {
             <PayMark state={o.pay} size={cells[i].d > 12 ? 20 : 14} />
             {clients.find(c => c.id === o.clientId)?.billing === 'mensual' && <i className="bill-tag" title={o.invoiceId ? 'facturado' : 'cobro mensual'}>{o.invoiceId ? 'F' : 'M'}</i>}
             {o.source === 'web' && <i className="web" aria-label="desde la web" />}
+            {o.recurringId && <i className="rep-tag" title="pedido fijo">↻</i>}
           </Bubble>
         ))}
       </Stage>
       )}
 
-      {bake.length > 0 && (
+      {bake.length > 0 && view !== 'semanal' && (
         <div className="prep" aria-label="Para preparar">
           <span className="eyebrow">para preparar</span>
           {bake.map((b, i) => <span key={b.code} className={'prep-dot s' + (i % 6)}><b>{b.qty}</b>{b.code}</span>)}
@@ -127,23 +131,25 @@ export function Ventas() {
           onChange={e => setText(e.target.value)}
           onKeyDown={e => { if (e.key === 'Escape') { setText(''); setEditing(null); } }}
           placeholder={editing ? 'Editando venta…' : 'Rápido: 2C 1MS Soleida'}
-          aria-label="Pedido rápido"
+          aria-label="Venta rápida"
         />
         <HelpDot topic="ventas" label="Cómo escribir una venta rápida" />
         <button className="go" disabled={!parsed.ok} aria-label={editing ? 'Guardar' : 'Anotar'}>↵</button>
       </form>
       <p className={'hint' + (text.trim() && !parsed.ok ? ' bad' : '')} aria-live="polite">
         {parsed.ok
-          ? <><b>{matchClient(parsed.client, clients)?.name ?? parsed.client}</b>{matchClient(parsed.client, clients)?.billing === 'mensual' ? ' (mensual)' : ''} · {parsed.lines.map(l => `${l.qty} ${l.offering.name}`).join(', ')} · {colones(parsed.amountOverride ?? parsed.lines.reduce((s, l) => s + l.qty * l.offering.price, 0))} · {dayLabel(parsed.date, now)} · {PAY[parsed.pay].mark} {PAY[parsed.pay].label}</>
+          ? <><b>{matchClient(parsed.client, clients)?.name ?? parsed.client}</b>{matchClient(parsed.client, clients)?.billing === 'mensual' ? ' (mensual)' : ''} · {parsed.lines.map(l => `${l.qty} ${l.offering.name}`).join(', ')} · {colones(parsed.amountOverride ?? parsed.lines.reduce((s, l) => s + l.qty * l.offering.price, 0))} · {dayLabel(parsed.date, now)} · {PAY[parsed.pay].mark} {PAY[parsed.pay].label}{parsed.weekly ? ' · ↻ semanal' : ''}</>
           : text.trim() ? QUICK_ERRORS[parsed.error] + (parsed.detail ? `: ${parsed.detail}` : '') : null}
       </p>
+
+      {fijo && recurring.some(r => r.id === fijo) && <FijoSheet r={recurring.find(r => r.id === fijo)!} isNew={false} onClose={() => setFijo(null)} />}
 
       {focused && (
         <Focus
           onClose={() => setFocus(null)}
           center={
             <>
-              <span className="eyebrow">{dayLabel(focused.date, now)} · {focused.status === 'cancelado' ? 'cancelado' : STATUS_FLOW[focused.status].label}</span>
+              <span className="eyebrow">{dayLabel(focused.date, now)} · {focused.status === 'cancelado' ? 'cancelado' : STATUS_FLOW[focused.status].label}{focused.recurringId ? ' · ↻ fijo' : ''}</span>
               <strong className="mid">{focused.client}</strong>
               <span className="small">{focused.items.map(i => `${i.qty} ${i.name}`).join(' · ')}</span>
               {focused.note && <em className="small">{focused.note}</em>}
@@ -159,6 +165,7 @@ export function Ventas() {
             { label: `${PAY[PAY[focused.pay].next].mark} ${PAY[PAY[focused.pay].next].label}`, onClick: () => updateOrder(focused.id, { pay: PAY[focused.pay].next }) },
             { label: 'editar', onClick: () => edit(focused) },
             ...(focused.status === 'cancelado' ? [] : [{ label: 'cancelar', onClick: () => updateOrder(focused.id, { status: 'cancelado' }), tone: 'bad' as const }]),
+            ...(focused.recurringId && recurring.some(r => r.id === focused.recurringId) ? [{ label: '↻ fijo', onClick: () => { setFocus(null); setFijo(focused.recurringId!); } }] : []),
             { label: 'borrar', onClick: () => remove(focused), tone: 'bad' },
           ]}
         />

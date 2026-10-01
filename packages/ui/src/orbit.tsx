@@ -56,26 +56,29 @@ export interface FocusAction {
   title?: string;
 }
 
-/** Algo en el centro con sus acciones orbitando alrededor. */
-export function Focus({ center, actions, onClose }: { center: ReactNode; actions: FocusAction[]; onClose: () => void }) {
+/** Detalle de algo tocado: un panel con su información y las acciones en fila.
+    En el teléfono sube desde abajo; en pantallas anchas queda al costado. */
+export function Focus({ center, actions, onClose, title }: { center: ReactNode; actions: FocusAction[]; onClose: () => void; title?: string }) {
   useEffect(() => {
     const k = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     addEventListener('keydown', k);
     return () => removeEventListener('keydown', k);
   }, [onClose]);
-  const all = [...actions, { label: '×', onClick: onClose, tone: 'muted' as const, title: 'Cerrar' }];
-  // portal: el paginador usa transform, que rompería el position: fixed
+  // portal: las capas de zoom usan clip/transform, que romperían el position: fixed
   return createPortal(
-    <div className="focus" role="dialog" aria-modal="true" onClick={e => e.target === e.currentTarget && onClose()}>
-      <Stage className="focus-stage" fit={false}>
-        <Track r={41} dashed />
-        <div className="bubble focus-center" style={{ '--x': 50, '--y': 50, '--d': 62 } as CSSProperties}>{center}</div>
-        {all.map((a, i) => (
-          <Bubble key={i} at={around(i, all.length, 41, -360 / all.length / 2)} d={19} className={'action ' + (a.tone ?? '')} onClick={() => a.onClick()} label={a.title}>
-            <span>{a.label}</span>
-          </Bubble>
-        ))}
-      </Stage>
+    <div className="panel-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <aside className="panel" role="dialog" aria-modal="true" aria-label={title ?? 'Detalle'}>
+        <span className="panel-grip" aria-hidden="true" />
+        <button className="panel-close" onClick={onClose} aria-label="Cerrar">×</button>
+        <div className="panel-body">{center}</div>
+        {actions.length > 0 && (
+          <div className="panel-actions">
+            {actions.map((a, i) => (
+              <button key={i} type="button" className={'panel-btn ' + (a.tone ?? '')} onClick={() => a.onClick()} title={a.title}>{a.label}</button>
+            ))}
+          </div>
+        )}
+      </aside>
     </div>,
     document.body,
   );

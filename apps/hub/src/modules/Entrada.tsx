@@ -4,11 +4,11 @@
 
 import { useMemo, useRef, useState } from 'react';
 import {
-  PAY, QUICK_ERRORS, addDays, colones, dayLabel, fromISODate, matchClient, parseQuick,
+  PAY, QUICK_ERRORS, WEEKDAY_SHORT, WEEK_ORDER, addDays, colones, dayLabel, fromISODate, matchClient, parseQuick,
   type PayState,
 } from '@dc/core';
 import { PayMark, Sheet, Shop, Stepper, cartLines, useToast, type Cart } from '@dc/ui';
-import { saveOrder, today, useStore } from '../store';
+import { now as nowIso, saveOrder, saveRecurring, today, useStore } from '../store';
 import { useNav } from '../nav';
 import { HelpDot } from '../HelpDot';
 
@@ -55,7 +55,7 @@ export function Entrada() {
             {text.trim() && (
               <p className={'hint' + (parsed.ok ? '' : ' bad')} aria-live="polite">
                 {parsed.ok
-                  ? <><b>{matchClient(parsed.client, clients)?.name ?? parsed.client}</b> · {parsed.lines.map(l => `${l.qty} ${l.offering.name}`).join(', ')} · {dayLabel(parsed.date, now)} · {PAY[parsed.pay].mark}</>
+                  ? <><b>{matchClient(parsed.client, clients)?.name ?? parsed.client}</b> · {parsed.lines.map(l => `${l.qty} ${l.offering.name}`).join(', ')} · {dayLabel(parsed.date, now)} · {PAY[parsed.pay].mark}{parsed.weekly ? ' · ↻ semanal' : ''}</>
                   : QUICK_ERRORS[parsed.error] + (parsed.detail ? `: ${parsed.detail}` : '')}
               </p>
             )}
@@ -83,6 +83,8 @@ function Checkout({ cart, onCart, onClose, onDone }: { cart: Cart; onCart: (c: C
   const [date, setDate] = useState(now);
   const [pay, setPay] = useState<PayState>('pending');
   const [note, setNote] = useState('');
+  const [weekly, setWeekly] = useState(false);
+  const [days, setDays] = useState<number[]>([]);
   const lines = cartLines(cart, offerings);
   const known = matchClient(client, clients);
   const lineTotal = (id: string, qty: number, price: number) => Math.round(qty * price * (1 - (known?.discounts[id] ?? 0)));
@@ -92,6 +94,16 @@ function Checkout({ cart, onCart, onClose, onDone }: { cart: Cart; onCart: (c: C
     e.preventDefault();
     if (!lines.length) return onClose();
     if (!client.trim()) return toast('¿Para quién es?');
+    if (weekly) {
+      const weekdays = days.length ? days : [fromISODate(date).getDay()];
+      saveRecurring({
+        id: crypto.randomUUID(), client: known?.name ?? client.trim(), clientId: known?.id,
+        items: lines.map(l => ({ offeringId: l.offering.id, qty: l.qty })), weekdays, every: 1, start: date,
+        pay, note: note.trim() || undefined, active: true, skips: [], createdAt: nowIso(),
+      });
+      toast(`Fijo creado: cada ${weekdays.map(w => WEEKDAY_SHORT[w]).join(', ')}`);
+      return onDone(known?.name ?? client.trim(), date);
+    }
     const o = saveOrder({ lines, client: client.trim(), date, pay, note: note.trim() || undefined });
     onDone(o.client, o.date);
   }
@@ -114,7 +126,7 @@ function Checkout({ cart, onCart, onClose, onDone }: { cart: Cart; onCart: (c: C
           <datalist id="dc-clients">{clients.filter(c => c.active).map(c => <option key={c.id} value={c.name} />)}</datalist>
           {known && <small className="ok-text">{known.name} · {known.billing === 'mensual' ? 'va a su factura mensual' : 'contado'}</small>}
         </label>
-        <div className="field wide">Día
+        <div className="field wide">{weekly ? 'Empieza' : 'Día'}
           <div className="beads">
             {Array.from({ length: 7 }, (_, i) => addDays(now, i)).map(d => (
               <button type="button" key={d} className={'bead' + (d === date ? ' on' : '')} onClick={() => setDate(d)} aria-pressed={d === date}>
@@ -123,13 +135,27 @@ function Checkout({ cart, onCart, onClose, onDone }: { cart: Cart; onCart: (c: C
             ))}
           </div>
         </div>
+        <div className="field wide">Se repite
+          <div className="row">
+            <button type="button" className={'chip' + (!weekly ? ' on' : '')} onClick={() => setWeekly(false)}>solo esta vez</button>
+            <button type="button" className={'chip' + (weekly ? ' on' : '')} onClick={() => { setWeekly(true); if (!days.length) setDays([fromISODate(date).getDay()]); }}>↻ semanal</button>
+          </div>
+          {weekly && (
+            <div className="week small">
+              {WEEK_ORDER.map(w => (
+                <button type="button" key={w} className={'week-day' + (days.includes(w) ? ' on' : '')} aria-pressed={days.includes(w)}
+                  onClick={() => setDays(days.includes(w) ? days.filter(x => x !== w) : [...days, w].sort())}><span>{WEEKDAY_SHORT[w]}</span></button>
+              ))}
+            </div>
+          )}
+        </div>
         <div className="field wide pay-row"><span>Pago <HelpDot topic="pago" label="Marca de pago" /></span>
           <span><PayMark state={pay} size={34} onChange={setPay} /> {PAY[pay].label}</span>
         </div>
         <label className="field wide">Nota<input value={note} onChange={e => setNote(e.target.value)} placeholder="Opcional" /></label>
         <div className="checkout-foot">
           <span>Total <b>{colones(total)}</b></span>
-          <button className="shop-go">Anotar venta</button>
+          <button className="shop-go">{weekly ? 'Crear fijo' : 'Anotar venta'}</button>
         </div>
       </form>
     </Sheet>

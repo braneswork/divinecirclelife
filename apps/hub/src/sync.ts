@@ -1,11 +1,11 @@
 /* Puente con Supabase. Mapea camelCase (app) ↔ snake_case (base de datos).
    Si no hay Supabase o no hay sesión, no hace nada y todo queda en el dispositivo. */
 
-import type { Client, Expense, Invoice, Offering, Order, Project } from '@dc/core';
+import type { Client, Expense, Invoice, Offering, Order, Project, Recurring } from '@dc/core';
 import { sb } from './supabase';
 
-export type Table = 'orders' | 'offerings' | 'projects' | 'clients' | 'invoices' | 'expenses';
-const TABLES: Table[] = ['projects', 'offerings', 'clients', 'orders', 'invoices', 'expenses'];
+export type Table = 'orders' | 'offerings' | 'projects' | 'clients' | 'invoices' | 'expenses' | 'recurring';
+const TABLES: Table[] = ['projects', 'offerings', 'clients', 'recurring', 'orders', 'invoices', 'expenses'];
 type Row = Record<string, unknown>;
 
 const snake = (k: string) => k.replace(/[A-Z]/g, c => '_' + c.toLowerCase());
@@ -30,7 +30,7 @@ function report(error: { message: string } | null) {
   if (error) { lastError = error.message; console.warn('[sync]', error.message); }
 }
 
-export function pushRow(table: Table, obj: Order | Offering | Project | Client | Invoice | Expense) {
+export function pushRow(table: Table, obj: Order | Offering | Project | Client | Invoice | Expense | Recurring) {
   void (async () => {
     if (!(await signedIn())) return;
     const { error } = await sb!.from(table).upsert(toRow(obj));

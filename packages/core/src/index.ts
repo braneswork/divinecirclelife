@@ -9,3 +9,4 @@ export * from './billing';
 export * from './finance';
 export * from './expense';
 export * from './config';
+export * from './recurring';

@@ -359,36 +359,29 @@ code { font-size: .85em; word-break: break-all; }
 
 /* ---------- mar (en inicio y su página) ---------- */
 .sea-card {
-  flex: 0 0 auto; width: min(100%, 520px); margin-top: 4px; padding: 10px 14px 10px;
-  border: 1.5px solid var(--line); border-radius: 22px; background: color-mix(in srgb, var(--card) 80%, transparent);
-  display: flex; flex-direction: column; gap: 6px; cursor: pointer; text-align: left; transition: border-color .2s;
+  flex: 0 0 auto; max-width: 100%; margin-top: 4px; padding: 6px 14px 6px 10px;
+  border: 1.5px solid var(--line); border-radius: 999px; background: color-mix(in srgb, var(--card) 80%, transparent);
+  display: flex; align-items: center; gap: 12px; cursor: pointer; transition: border-color .2s; white-space: nowrap;
 }
 .sea-card:hover { border-color: #5FA9C4; }
-.sea-card.empty { flex-direction: row; align-items: center; justify-content: center; gap: 8px; font-size: 12.5px; color: var(--muted); }
-.sea-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.sea-spot { white-space: nowrap; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .16em; color: var(--muted); }
-.sea-tide-txt { white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: #5FA9C4; }
-.sea-tide { position: relative; height: 46px; margin: 10px 0 16px; }
+.sea-card.empty { gap: 8px; font-size: 12px; color: var(--muted); }
+.sea-tide { position: relative; width: 58px; height: 24px; flex: 0 0 auto; }
 .sea-tide svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .sea-now {
-  position: absolute; width: 13px; height: 13px; border-radius: 50%; transform: translate(-50%, -50%);
-  background: var(--gold); border: 2px solid var(--bg); box-shadow: 0 0 0 4px color-mix(in srgb, var(--gold) 30%, transparent);
+  position: absolute; width: 9px; height: 9px; border-radius: 50%; transform: translate(-50%, -50%);
+  background: var(--gold); border: 1.5px solid var(--bg); box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 30%, transparent);
 }
-.sea-turn { position: absolute; transform: translate(-50%, -135%); font-size: 9.5px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
-.sea-turn.baja { transform: translate(-50%, 35%); }
-.sea-row { display: flex; justify-content: space-between; gap: 6px; }
-.sea-item { display: flex; align-items: center; gap: 6px; min-width: 0; }
-.sea-item > svg { flex: 0 0 auto; }
-.sea-item > span { display: flex; flex-direction: column; line-height: 1.1; min-width: 0; }
-.sea-item b { font-size: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.sea-item small { font-size: 10px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sea-item.swell > svg { color: #5FA9C4; }
-.sea-item.wind.good > svg, .sea-item.wind.good b { color: var(--ok); }
-.sea-item.wind.bad > svg, .sea-item.wind.bad b { color: var(--bad); }
-.sea-item.wind.calm > svg { color: var(--muted); }
-.sea-item.sky > svg { color: #E58A5C; }
-.sea-item.sun > svg { color: var(--gold); }
-@media (max-width: 380px) { .sea-item > svg { width: 18px; height: 18px; } .sea-item { gap: 4px; } .sea-item b { font-size: 13px; } }
+.sea-item { display: inline-flex; align-items: center; gap: 3px; font-size: 13px; font-variant-numeric: tabular-nums; }
+.sea-item b { font-weight: 700; }
+.sea-item small { font-size: 10px; color: var(--muted); }
+.sea-item.tide { color: #5FA9C4; font-weight: 800; }
+.sea-item.tide b { color: var(--fg); }
+.sea-item.swell svg { color: #5FA9C4; }
+.sea-item.wind.good svg, .sea-item.wind.good b { color: var(--ok); }
+.sea-item.wind.bad svg, .sea-item.wind.bad b { color: var(--bad); }
+.sea-item.wind.calm svg { color: var(--muted); }
+.sea-item.sky svg { color: #E58A5C; }
+@media (max-width: 370px) { .sea-card { gap: 8px; } .sea-tide { width: 46px; } }
 
 .mar { width: 100%; max-width: 620px; display: flex; flex-direction: column; gap: 10px; padding-bottom: 16px; }
 .mar-card { border: 1.5px solid var(--line); border-radius: 18px; background: var(--card); padding: 12px 14px; }

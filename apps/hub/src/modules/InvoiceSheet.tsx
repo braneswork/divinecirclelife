@@ -2,12 +2,12 @@
    guardar como PDF, marcar pagada, sumar ajustes (préstamo, abono) o anular. */
 
 import { useState } from 'react';
-import { createPortal } from 'react-dom';
 import { colones, invoiceTotals } from '@dc/core';
-import { PayMark, useToast } from '@dc/ui';
+import { PayMark, Sheet, useToast } from '@dc/ui';
 import logo from '@dc/brand/assets/logo-light.png';
 import { removeInvoice, setInvoicePaid, upsertInvoice, useStore } from '../store';
 import { monthName } from './Clientes';
+import { HelpDot } from '../HelpDot';
 
 export function InvoiceSheet({ id, onClose }: { id: string; onClose: () => void }) {
   const inv = useStore(s => s.invoices.find(i => i.id === id));
@@ -25,9 +25,8 @@ export function InvoiceSheet({ id, onClose }: { id: string; onClose: () => void 
     setAdj({ label: '', amount: '' });
   }
 
-  return createPortal(
-    <div className="sheet-overlay" role="dialog" aria-modal="true" onClick={e => e.target === e.currentTarget && onClose()}>
-      <article className="invoice">
+  return (
+    <Sheet onClose={onClose} className="invoice" label={`Factura ${inv.number}`}>
         <header className="invoice-head">
           <img src={logo} alt="Divine Circle" />
           <div className="invoice-meta">
@@ -76,9 +75,8 @@ export function InvoiceSheet({ id, onClose }: { id: string; onClose: () => void 
           <button className="btn-inline ghost" onClick={() => print()}>Imprimir / PDF</button>
           <button className="btn-inline ghost bad" onClick={() => { if (confirm(`¿Anular la factura ${inv.number}? Sus pedidos vuelven a quedar por facturar.`)) { removeInvoice(inv); onClose(); } }}>Anular</button>
           <button className="btn-inline ghost" onClick={onClose}>Cerrar</button>
+          <HelpDot topic="factura" label="Factura mensual" />
         </div>
-      </article>
-    </div>,
-    document.body,
+    </Sheet>
   );
 }

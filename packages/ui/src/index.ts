@@ -5,4 +5,7 @@ export * from './pillars';
 export * from './zoom';
 export * from './nav';
 export * from './icons';
+export * from './photo';
+export * from './sheet';
+export * from './shop';
 export * from './toast';

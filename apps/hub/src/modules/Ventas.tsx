@@ -1,4 +1,4 @@
-/* Pedidos: el día al centro, un anillo con lo que hay que preparar
+/* Ventas: el día al centro, un anillo con lo que hay que preparar
    (pan, jugos, café…) y los pedidos orbitando. Tocar un pedido lo trae al centro.
    El pan se hornea por tandas: los días de horno muestran todo lo que va. */
 
@@ -8,6 +8,7 @@ import {
   type Order,
 } from '@dc/core';
 import { Bubble, Donut, Focus, PayMark, Stage, spiralCells, useToast } from '@dc/ui';
+import { HelpDot } from '../HelpDot';
 import { removeOrder, restoreOrder, saveOrder, today, updateOrder, useStore } from '../store';
 
 /** Texto rápido de un pedido para editarlo escribiendo (la fecha se conserva sola). */
@@ -15,7 +16,7 @@ const toQuickText = (o: Order) =>
   [o.items.map(i => `${i.qty}${i.code}`).join(' '), o.client, o.amountOverride != null ? String(o.amountOverride) : '']
     .filter(Boolean).join(' ') + (o.note ? ` // ${o.note}` : '');
 
-export function Pedidos() {
+export function Ventas() {
   const orders = useStore(s => s.orders);
   const offerings = useStore(s => s.offerings);
   const clients = useStore(s => s.clients);
@@ -108,14 +109,6 @@ export function Pedidos() {
         </div>
       )}
 
-      <div className="legend-row">
-        <span><i className="ring-legend" />por preparar</span>
-        <span><i className="ring-legend horneando" />en proceso</span>
-        <span><i className="ring-legend listo" />listo</span>
-        <span><i className="ring-legend entregado" />entregado</span>
-        <span><PayMark state="paid" size={14} /><PayMark state="pending" size={14} /><PayMark state="credit" size={14} /></span>
-      </div>
-
       <form className="portal" onSubmit={submit}>
         <input
           ref={inputRef}
@@ -123,17 +116,16 @@ export function Pedidos() {
           value={text}
           onChange={e => setText(e.target.value)}
           onKeyDown={e => { if (e.key === 'Escape') { setText(''); setEditing(null); } }}
-          placeholder={editing ? 'Editando pedido…' : '1C Soleida  ·  2C 1MS Ana @vie'}
+          placeholder={editing ? 'Editando venta…' : 'Rápido: 2C 1MS Soleida'}
           aria-label="Pedido rápido"
         />
+        <HelpDot topic="ventas" label="Cómo escribir una venta rápida" />
         <button className="go" disabled={!parsed.ok} aria-label={editing ? 'Guardar' : 'Anotar'}>↵</button>
       </form>
       <p className={'hint' + (text.trim() && !parsed.ok ? ' bad' : '')} aria-live="polite">
         {parsed.ok
           ? <><b>{matchClient(parsed.client, clients)?.name ?? parsed.client}</b>{matchClient(parsed.client, clients)?.billing === 'mensual' ? ' (mensual)' : ''} · {parsed.lines.map(l => `${l.qty} ${l.offering.name}`).join(', ')} · {colones(parsed.amountOverride ?? parsed.lines.reduce((s, l) => s + l.qty * l.offering.price, 0))} · {dayLabel(parsed.date, now)} · {PAY[parsed.pay].mark} {PAY[parsed.pay].label}</>
-          : text.trim()
-            ? QUICK_ERRORS[parsed.error] + (parsed.detail ? `: ${parsed.detail}` : '')
-            : <>{offerings.filter(o => o.active && o.kind === 'producto').map(o => <span key={o.id}><b>{o.code}</b> {o.name} </span>)}· <b>@vie</b> fecha · <b>//</b> nota · <b>pagado</b> · <b>credito</b></>}
+          : text.trim() ? QUICK_ERRORS[parsed.error] + (parsed.detail ? `: ${parsed.detail}` : '') : null}
       </p>
 
       {focused && (

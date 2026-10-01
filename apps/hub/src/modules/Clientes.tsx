@@ -10,6 +10,7 @@ import {
 import { Bubble, Focus, Icon, Stage, Track, Zoom, around, hexCells, originOf, useToast, type Origin } from '@dc/ui';
 import { now, saveInvoice, today, upsertClient, useStore } from '../store';
 import { InvoiceSheet } from './InvoiceSheet';
+import { HelpDot } from '../HelpDot';
 
 const slug = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const pct = (d?: number) => (d ? `-${Math.round(d * 100)}%` : 'lista');
@@ -66,7 +67,6 @@ export function Clientes() {
         ))}
         <Bubble at={cells[list.length + 1].at} d={cells[list.length + 1].d} className="add" onClick={() => setDraft({ id: '', name: '', billing: 'contado', discounts: {}, active: true })} label="Nuevo cliente"><span>+</span></Bubble>
       </Stage>
-      <p className="hint">Borde dorado: cobro mensual con factura. Al escribir un pedido con su nombre (o alias) se aplica su descuento.</p>
 
       {draft && (
         <Focus
@@ -170,6 +170,7 @@ function ClientPage({ id, onBack }: { id: string; onBack: () => void }) {
         <div className="invoice-cta">
           <span>{pendingInv.length} pedidos sin facturar · {colones(previewSub)} → <b>{colones(previewTotal)}</b></span>
           <button className="btn-inline" onClick={issue}><Icon name="factura" size={16} /> Emitir factura</button>
+          <HelpDot topic="factura" label="Factura mensual" />
         </div>
       ) : (
         <p className="hint">Nada por facturar en {monthName(period)}.</p>

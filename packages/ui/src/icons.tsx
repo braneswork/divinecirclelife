@@ -11,6 +11,11 @@ const PATHS: Record<string, string> = {
   ajustes: '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.8M12 18.4v2.8M2.8 12h2.8M18.4 12h2.8M5.5 5.5l2 2M16.5 16.5l2 2M5.5 18.5l2-2M16.5 7.5l2-2"/>',
   factura: '<path d="M6 3.5h9l3 3v14H6z"/><path d="M9 9.5h6M9 13h6M9 16.5h3.5"/>',
   salida: '<circle cx="12" cy="12" r="8.6"/><path d="M8 12h8"/>',
+  ventas: '<path d="M4 7.5h16l-1.4 11.3a2 2 0 0 1-2 1.7H7.4a2 2 0 0 1-2-1.7z"/><path d="M8.5 11.5c.6 1.8 2 2.8 3.5 2.8s2.9-1 3.5-2.8"/><path d="M9 7.5V6a3 3 0 0 1 6 0v1.5"/>',
+  productos: '<circle cx="12" cy="12" r="8.6"/><path d="M7.5 13.2c1-2.6 2.7-3.9 4.5-3.9s3.5 1.3 4.5 3.9"/><path d="M9.6 11.2l.9 1.4M12 10.3v1.7M14.4 11.2l-.9 1.4"/>',
+  mas: '<path d="M12 5v14M5 12h14"/>',
+  menos: '<path d="M5 12h14"/>',
+  ayuda: '<circle cx="12" cy="12" r="8.6"/><path d="M9.6 9.5a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5v.6"/><circle cx="12" cy="16.9" r=".4" fill="currentColor"/>',
   volver: '<path d="M14.5 6 8.5 12l6 6"/>',
 };
 

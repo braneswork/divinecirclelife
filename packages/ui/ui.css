@@ -175,7 +175,7 @@ button.pay { cursor: pointer; }
 .zoom {
   position: absolute; inset: 0; z-index: 10; background: var(--bg);
   background-image: radial-gradient(90% 60% at 50% 42%, color-mix(in srgb, var(--gold) 13%, transparent), transparent 70%);
-  overflow: hidden;
+  overflow: clip;
 }
 .zoom-inner {
   height: 100%; overflow-y: auto; overscroll-behavior: contain;
@@ -222,3 +222,100 @@ button.pay { cursor: pointer; }
 @media (prefers-reduced-motion: reduce) {
   .bubble, .focus, .focus-stage, .toast { transition: none !important; animation: none !important; }
 }
+
+/* ============ foto ============ */
+.photo {
+  position: relative; display: grid; place-items: center; width: 100%; aspect-ratio: 1; border-radius: 50%; overflow: hidden;
+  color: color-mix(in srgb, var(--pt) 80%, var(--fg));
+}
+.photo.placeholder {
+  background:
+    radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--pt) 30%, var(--card)) 0 40%, transparent 41%),
+    radial-gradient(circle, color-mix(in srgb, var(--pt) 14%, var(--card)), color-mix(in srgb, var(--pt) 6%, var(--card)));
+  border: 1.5px dashed color-mix(in srgb, var(--pt) 55%, transparent);
+  align-content: center; gap: 2%;
+}
+.photo.placeholder b { font-size: min(28cqw, 2.2em); font-weight: 700; letter-spacing: .04em; line-height: 1; }
+.photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* burbuja con foto: la foto llena el círculo y el nombre va en una franja abajo */
+.bubble.photo-bubble { padding: 0; overflow: hidden; background: var(--card); }
+.photo-bubble .photo { position: absolute; inset: 0; container-type: inline-size; border: 0; }
+.photo-bubble .photo.placeholder b { font-size: 26cqw; }
+.photo-bubble .label {
+  position: absolute; left: 0; right: 0; bottom: 0; padding: 4% 12% 12%;
+  background: linear-gradient(transparent, color-mix(in srgb, var(--bg) 88%, transparent) 40%);
+  display: flex; flex-direction: column; align-items: center; gap: 1px; line-height: 1.1;
+}
+.photo-bubble .label strong { font-size: calc(var(--d) * .1cqw); }
+.photo-bubble .label .small { font-size: clamp(8px, calc(var(--d) * .075cqw), 12px); color: var(--fg); opacity: .85; }
+
+/* ============ hoja ============ */
+.sheet-overlay {
+  position: fixed; inset: 0; z-index: 45; overflow-y: auto; padding: 20px 12px;
+  background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(10px);
+  display: flex; justify-content: center; align-items: flex-start; animation: dc-fade .18s;
+}
+.sheet {
+  position: relative; width: min(100%, 560px); background: var(--card); color: var(--fg); border: 1px solid var(--line);
+  border-radius: 24px; padding: 24px 22px 22px; box-shadow: 0 20px 60px rgba(0, 0, 0, .3); animation: dc-bloom .22s ease;
+}
+.sheet-close {
+  position: absolute; top: 12px; right: 12px; width: 34px; height: 34px; border-radius: 50%;
+  border: 1.5px solid var(--line); background: var(--card); color: var(--fg); cursor: pointer; font-size: 20px; line-height: 1;
+}
+.md h2, .md h3, .md h4 { margin: 1.2em 0 .4em; line-height: 1.2; }
+.md h2 { font-size: 20px; margin-top: 0; }
+.md h3 { font-size: 15px; }
+.md h4 { font-size: 14px; text-transform: uppercase; letter-spacing: .12em; color: var(--accent); scroll-margin-top: 20px; margin-top: 1.6em; }
+.md h4.here { color: var(--gold); }
+.md h4.here::before { content: '● '; }
+.md h5 { font-size: 13px; margin: 1em 0 .3em; }
+.md p, .md li { font-size: 14.5px; line-height: 1.55; }
+.md ul { padding-left: 1.2em; margin: .3em 0 .8em; }
+.md code { background: var(--soft); border-radius: 6px; padding: 1px 6px; font-size: .92em; }
+.md .md-row { font-variant-numeric: tabular-nums; margin: .2em 0; }
+
+/* ============ tienda ============ */
+.shop { width: 100%; max-width: 760px; display: flex; flex-direction: column; gap: 14px; padding-bottom: 84px; }
+.shop-bar { display: flex; flex-direction: column; gap: 8px; align-items: center; }
+.shop-tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; max-width: 100%; padding: 2px; justify-content: safe center; }
+.shop-tabs button {
+  flex: 0 0 auto; border: 1.5px solid var(--line); background: var(--card); color: var(--muted); border-radius: 999px;
+  padding: 7px 14px; font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer;
+}
+.shop-tabs button.on { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.shop-search { width: min(100%, 320px); border: 1.5px solid var(--line); background: var(--card); color: var(--fg); border-radius: 999px; padding: 8px 14px; font: inherit; text-align: center; }
+.shop-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 18px 12px; }
+.shop-item { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+.shop-item strong { font-size: 14px; line-height: 1.2; }
+.shop-photo { position: relative; width: 100%; max-width: 132px; border: 0; padding: 0; background: none; cursor: pointer; border-radius: 50%; container-type: inline-size; }
+.shop-photo .photo { border: 2px solid color-mix(in srgb, var(--pt, var(--gold)) 70%, transparent); box-shadow: 0 0 16px color-mix(in srgb, var(--pt, var(--gold)) 30%, transparent); }
+.shop-item.in .shop-photo .photo { border-color: var(--gold); box-shadow: 0 0 0 4px color-mix(in srgb, var(--gold) 30%, transparent), 0 0 20px color-mix(in srgb, var(--gold) 40%, transparent); }
+.shop-badge {
+  position: absolute; top: 2%; right: 2%; min-width: 30px; height: 30px; border-radius: 50%; padding: 0 6px;
+  background: var(--gold); color: #1A0718; font-weight: 800; display: grid; place-items: center; border: 2px solid var(--bg);
+}
+.shop-price { font-size: 13px; color: var(--muted); }
+.shop-price small { font-size: 11.5px; }
+.shop-empty { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 24px; }
+.stepper { display: inline-flex; align-items: center; border: 1.5px solid var(--line); border-radius: 999px; background: var(--card); }
+.stepper button { border: 0; background: none; width: 34px; height: 34px; cursor: pointer; font-size: 18px; color: var(--accent); font-family: inherit; }
+.stepper button:disabled { color: var(--line); cursor: default; }
+.stepper output { min-width: 22px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+.shop-cart {
+  position: sticky; bottom: 8px; z-index: 5; display: flex; align-items: center; gap: 10px;
+  background: var(--fg); color: var(--bg); border-radius: 999px; padding: 6px 6px 6px 8px; box-shadow: 0 10px 30px rgba(0, 0, 0, .3);
+}
+.shop-cart-dot { width: 34px; height: 34px; border-radius: 50%; background: var(--gold); color: #1A0718; font-weight: 800; display: grid; place-items: center; flex: 0 0 auto; }
+.shop-cart-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.shop-go { border: 0; border-radius: 999px; padding: 10px 18px; background: var(--accent); color: var(--bg); font: inherit; font-weight: 700; cursor: pointer; flex: 0 0 auto; }
+.shop-cart .shop-go { background: var(--gold); color: #1A0718; }
+.product-sheet { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.product-hero { width: min(70%, 260px); container-type: inline-size; }
+.product-hero .photo { border: 3px solid var(--pt, var(--gold)); box-shadow: 0 0 30px color-mix(in srgb, var(--pt, var(--gold)) 40%, transparent); }
+.product-sheet h2 { margin: 0; font-size: 22px; }
+.product-price { margin: 0; font-weight: 700; font-size: 17px; }
+.product-price small { font-weight: 500; color: var(--muted); }
+.product-desc { margin: 0; color: var(--muted); max-width: 42ch; }
+.product-actions { display: flex; gap: 10px; align-items: center; margin-top: 6px; }

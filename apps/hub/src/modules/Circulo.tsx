@@ -60,9 +60,6 @@ export function Circulo() {
         {neighbors.map((p, i) => node(p, around(i, neighbors.length + 1, 43, 15), 12))}
         <Bubble at={around(neighbors.length, neighbors.length + 1, 43, 15)} d={12} className="add" onClick={() => open(null)} label="Sumar un proyecto"><span>+</span></Bubble>
       </Stage>
-      <p className="hint">
-        Anillo cercano: aliados · anillo exterior: vecinos · <span className="legend gold" /> ecosistema Branes <span className="legend" /> independiente
-      </p>
 
       {draft && (
         <Focus

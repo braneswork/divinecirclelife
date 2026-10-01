@@ -74,3 +74,14 @@ describe('plata del mes', () => {
     expect(s.porFamilia[0].key).toBe('pan');
   });
 });
+
+import { offeringStats } from './finance';
+describe('lo que generó cada oferta', () => {
+  it('unidades, ingresos con descuento y quién más lo pide', () => {
+    const orders = [order('2026-09-09', [[bb, 16]]), order('2026-09-19', [[bb, 14]]), order('2026-09-20', [[c, 1]], { client: 'Ana', clientId: undefined, items: [{ offeringId: c.id, code: 'C', name: 'Campesino', qty: 1, unitPrice: 4000 }] }), order('2026-09-21', [[bb, 99]], { status: 'cancelado' })];
+    const st = offeringStats(orders, '2026-09-01', '2026-09-30');
+    expect(st.get(bb.id)).toMatchObject({ units: 30, orders: 2, topClients: [{ client: 'Mantarraya Café', units: 30 }] });
+    expect(st.get(bb.id)!.revenue).toBe(7616 + 6664);
+    expect(st.get(c.id)!.revenue).toBe(4000);
+  });
+});

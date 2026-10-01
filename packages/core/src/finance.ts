@@ -71,3 +71,32 @@ export function monthRange(period: string) {
   const last = new Date(y, m, 0).getDate();
   return { from: `${period}-01`, to: `${period}-${String(last).padStart(2, '0')}` };
 }
+
+export interface OfferingStats {
+  units: number;
+  revenue: number;
+  orders: number;
+  /** quién más lo pide */
+  topClients: { client: string; units: number }[];
+}
+
+/** Lo que ha generado cada oferta en el periodo (después de descuentos, sin cancelados). */
+export function offeringStats(orders: Order[], from: string, to: string): Map<string, OfferingStats> {
+  const out = new Map<string, OfferingStats & { byClient: Map<string, number> }>();
+  for (const o of orders) {
+    if (o.status === 'cancelado' || !inPeriod(o.date, from, to)) continue;
+    const ratio = o.amountOverride != null ? o.amountOverride / (o.items.reduce((s, it) => s + lineTotal(it), 0) || 1) : 1;
+    for (const it of o.items) {
+      const st = out.get(it.offeringId) ?? { units: 0, revenue: 0, orders: 0, topClients: [], byClient: new Map() };
+      st.units += it.qty;
+      st.revenue += lineTotal(it) * ratio;
+      st.orders += 1;
+      st.byClient.set(o.client, (st.byClient.get(o.client) ?? 0) + it.qty);
+      out.set(it.offeringId, st);
+    }
+  }
+  for (const st of out.values()) {
+    st.topClients = [...st.byClient].map(([client, units]) => ({ client, units })).sort((a, b) => b.units - a.units).slice(0, 3);
+  }
+  return out;
+}

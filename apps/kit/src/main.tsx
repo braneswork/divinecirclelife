@@ -3,8 +3,8 @@ import { createRoot } from 'react-dom/client';
 import '@dc/brand/tokens.css';
 import '@dc/ui/ui.css';
 import './kit.css';
-import { ESSENCE, MOTTO, PHILOSOPHY, PILLARS, type PayState, type PillarId } from '@dc/core';
-import { Bubble, Donut, Focus, PayMark, PillarFlower, Stage, Track, ToastProvider, around, hexCells, spiralCells, useToast } from '@dc/ui';
+import { ESSENCE, MOTTO, PHILOSOPHY, PILLARS, SEED_EXPERIENCES, SEED_OFFERINGS, type PayState, type PillarId } from '@dc/core';
+import { Bubble, Donut, Focus, PayMark, Photo, PillarFlower, Shop, Stage, Track, ToastProvider, around, hexCells, spiralCells, useToast, type Cart } from '@dc/ui';
 import logo from '@dc/brand/assets/logo-light.png';
 import mark from '@dc/brand/assets/mark.png';
 
@@ -27,6 +27,7 @@ function Kit() {
   const [pillar, setPillar] = useState<PillarId>('essence');
   const [pay, setPay] = useState<PayState>('pending');
   const [focus, setFocus] = useState(false);
+  const [cart, setCart] = useState<Cart>({});
   const toast = useToast();
   const p = [ESSENCE, ...PILLARS].find(x => x.id === pillar)!;
 
@@ -36,7 +37,7 @@ function Kit() {
         <img src={logo} alt="Divine Circle" className="kit-logo" />
         <p className="page-title">UI kit</p>
         <nav className="kit-nav">
-          {['pilares', 'color', 'tipo', 'orbita', 'panal', 'pago', 'estados', 'foco'].map(s => <a key={s} href={'#' + s}>{s}</a>)}
+          {['pilares', 'color', 'tipo', 'orbita', 'panal', 'foto', 'tienda', 'pago', 'estados', 'foco'].map(s => <a key={s} href={'#' + s}>{s}</a>)}
         </nav>
       </header>
 
@@ -96,6 +97,16 @@ function Kit() {
             </Stage>
           </div>
         </div>
+      </Section>
+
+      <Section id="foto" title="Foto" note="Photo: siempre circular. Sin foto se ve el espacio reservado con el color del pilar y las iniciales.">
+        <div className="row">
+          {[ESSENCE, ...PILLARS].map(p => <div key={p.id} style={{ width: 84 }}><Photo name={p.name} tone={p.color} /></div>)}
+        </div>
+      </Section>
+
+      <Section id="tienda" title="Tienda" note="Shop: la misma pieza para el + del hub y para la web. Quien la usa decide qué pasa al continuar.">
+        <Shop offerings={[...SEED_OFFERINGS, ...SEED_EXPERIENCES]} cart={cart} onCart={setCart} onCheckout={() => toast('Continuar → cierre')} />
       </Section>
 
       <Section id="pago" title="Marca de pago" note="Del sistema original de Divine. Tocar avanza: ✓ pagado → ✕ no pagó → + crédito a favor.">

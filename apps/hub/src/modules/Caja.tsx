@@ -2,10 +2,11 @@
    Balance al centro, ventas por familia como anillo y alrededor cada cuenta:
    ventas, ✓ cobrado, ✕ por cobrar, + crédito, salidas y facturas abiertas. */
 
-import { useMemo, useRef, useState } from 'react';
-import { colones, dayLabel, monthOf, monthRange, parseExpense, summarize, type Expense } from '@dc/core';
+import { useMemo, useState } from 'react';
+import { useNav } from '../nav';
+import { colones, monthOf, monthRange, summarize } from '@dc/core';
 import { Bubble, Focus, Icon, PayMark, Stage, hexCells, useToast } from '@dc/ui';
-import { now, removeExpense, today, upsertExpense, useStore } from '../store';
+import { removeExpense, today, upsertExpense, useStore } from '../store';
 import { monthName, shiftMonth } from './Clientes';
 
 /** la flor: balance al centro, seis cuentas que lo tocan */
@@ -18,11 +19,9 @@ export function Caja() {
   const toast = useToast();
   const [period, setPeriod] = useState(monthOf(today()));
   const [focus, setFocus] = useState<Key | null>(null);
-  const [text, setText] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
+  const nav = useNav();
   const range = monthRange(period);
   const m = useMemo(() => summarize({ ...s, ...range }), [s, range.from, range.to]);
-  const parsed = parseExpense(text, today());
   const monthExpenses = s.expenses.filter(e => e.date >= range.from && e.date <= range.to).sort((a, b) => b.date.localeCompare(a.date));
   const openInvoices = s.invoices.filter(i => i.status === 'abierta');
 
@@ -34,16 +33,6 @@ export function Caja() {
     { key: 'salidas', label: 'salidas', value: m.salidas, tone: 'bad' },
     { key: 'facturas', label: 'facturas abiertas', value: m.facturasAbiertas, tone: 'gold' },
   ];
-
-  function add(e: React.FormEvent) {
-    e.preventDefault();
-    if (!parsed.ok) return toast(parsed.error === 'sin_monto' ? 'Escribe el monto, ej. "25000 super"' : 'No entendí la fecha');
-    const exp: Expense = { id: crypto.randomUUID(), date: parsed.date, type: parsed.type, amount: parsed.amount, note: parsed.note, createdAt: now() };
-    upsertExpense(exp);
-    setText('');
-    if (monthOf(exp.date) !== period) setPeriod(monthOf(exp.date));
-    toast(`Salida ${colones(exp.amount)} · ${exp.type}`, { label: 'Deshacer', run: () => removeExpense(exp.id) });
-  }
 
   const list = (rows: { k: string; v: number }[], empty: string) =>
     rows.length ? <ul className="mini-list">{rows.slice(0, 6).map(r => <li key={r.k}><span>{r.k}</span><b>{colones(r.v)}</b></li>)}</ul> : <span className="small">{empty}</span>;
@@ -72,15 +61,6 @@ export function Caja() {
         ))}
       </Stage>
 
-      <form className="portal" onSubmit={add}>
-        <input ref={inputRef} value={text} onChange={e => setText(e.target.value)} placeholder="Salida: 25000 super // nota" aria-label="Nueva salida" autoComplete="off" />
-        <button className="go" disabled={!parsed.ok} aria-label="Anotar salida">−</button>
-      </form>
-      <p className="hint">
-        {parsed.ok ? <><b>{colones(parsed.amount)}</b> · {parsed.type} · {dayLabel(parsed.date, today())}{parsed.note ? ` · ${parsed.note}` : ''}</>
-          : 'Tipos: super, ingredientes, renta, gas, delivery, baker… · @ayer para otra fecha'}
-      </p>
-
       {focus && (
         <Focus
           onClose={() => setFocus(null)}
@@ -103,7 +83,7 @@ export function Caja() {
               {focus === 'facturas' && list(openInvoices.map(i => ({ k: `${i.number} · ${i.client}`, v: i.lines.reduce((a, l) => a + l.total, 0) + i.adjustments.reduce((a, x) => a + x.amount, 0) })), 'todas pagadas')}
             </>
           }
-          actions={focus === 'salidas' ? [{ label: 'nueva salida', onClick: () => { setFocus(null); setTimeout(() => inputRef.current?.focus(), 0); }, tone: 'on' }] : []}
+          actions={focus === 'salidas' ? [{ label: 'nueva salida', onClick: () => { setFocus(null); nav.enter('salida'); }, tone: 'on' }] : []}
         />
       )}
     </>

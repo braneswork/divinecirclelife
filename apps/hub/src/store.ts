@@ -26,8 +26,12 @@ const KEY = 'divine-circle-hub-v2';
 const migrate = (s: State): State => ({
   ...s,
   clients: s.clients ?? SEED_CLIENTS,
-  // experiencias de la hoja que aún no estén en el catálogo de este dispositivo
-  offerings: [...s.offerings, ...SEED_EXPERIENCES.filter(e => !s.offerings.some(o => o.id === e.id || o.code === e.code))],
+  // experiencias de la hoja que aún no estén en el catálogo de este dispositivo,
+  // y descripción/presentación de la semilla para fichas que aún no las tengan
+  offerings: [...s.offerings, ...SEED_EXPERIENCES.filter(e => !s.offerings.some(o => o.id === e.id || o.code === e.code))].map(o => {
+    const seed = [...SEED_OFFERINGS, ...SEED_EXPERIENCES].find(x => x.id === o.id);
+    return seed ? { ...o, description: o.description ?? seed.description, unit: o.unit ?? seed.unit } : o;
+  }),
   invoices: s.invoices ?? [],
   expenses: s.expenses ?? [],
   orders: s.orders.map(o => {

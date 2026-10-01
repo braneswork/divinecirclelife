@@ -8,25 +8,26 @@ export const SEED_PROJECTS: Project[] = [
   { id: 'branes', slug: 'branes', name: 'Branes', ring: 'aliado', branes: true, tagline: 'Coworking y comunidad', active: true },
 ];
 
-const pan = (code: string, name: string, price: number): Offering => ({
+const pan = (code: string, name: string, price: number, description?: string, unit = 'unidad'): Offering => ({
   id: 'pan-' + code.toLowerCase(), projectId: DIVINE_ID, kind: 'producto', code, name, price, active: true, public: true, pillar: 'food', category: 'pan',
+  description, unit,
 });
 
 // Catálogo de panes del hub anterior
 export const SEED_OFFERINGS: Offering[] = [
-  pan('C', 'Campesino', 4000),
-  pan('MS', 'Multiseeds', 5000),
-  pan('CU', 'Cuadrado', 4000),
-  pan('BAG', 'Baguette', 1000),
-  pan('CR', 'Cinnamon Roll', 1500),
-  pan('BB', 'Burger Bun', 700),
-  pan('CIA', 'Ciabatta', 1000),
-  pan('PZ', 'Pizza', 4000),
-  pan('PZF', 'Pizza Frozen', 3000),
+  pan('C', 'Campesino', 4000, 'Pan de masa madre de fermentación lenta, corteza crujiente y miga abierta.'),
+  pan('MS', 'Multiseeds', 5000, 'Masa madre con mezcla de semillas.'),
+  pan('CU', 'Cuadrado', 4000, 'Pan de molde de masa madre, ideal para sándwiches.'),
+  pan('BAG', 'Baguette', 1000, 'Baguette de masa madre.'),
+  pan('CR', 'Cinnamon Roll', 1500, 'Rollo de canela con masa suave y glaseado.'),
+  pan('BB', 'Burger Bun', 700, 'Pan de hamburguesa suave de masa madre.'),
+  pan('CIA', 'Ciabatta', 1000, 'Ciabatta de hidratación alta.'),
+  pan('PZ', 'Pizza', 4000, 'Pizza de masa madre.'),
+  pan('PZF', 'Pizza Frozen', 3000, 'Base de pizza de masa madre congelada, lista para hornear.'),
 ];
 
-const exp = (code: string, name: string, price: number, pillar: Offering['pillar'], projectId = DIVINE_ID): Offering => ({
-  id: 'exp-' + code.toLowerCase(), projectId, kind: 'experiencia', code, name, price, active: true, public: false, pillar,
+const exp = (code: string, name: string, price: number, pillar: Offering['pillar'], projectId = DIVINE_ID, unit = 'por persona'): Offering => ({
+  id: 'exp-' + code.toLowerCase(), projectId, kind: 'experiencia', code, name, price, active: true, public: false, pillar, unit,
 });
 
 /** Experiencias de la hoja "Services & Products". */

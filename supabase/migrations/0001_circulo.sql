@@ -52,6 +52,9 @@ create table public.offerings (
   public     boolean not null default false,
   pillar     text check (pillar in ('essence', 'wisdom', 'imagination', 'movement', 'nature', 'family', 'food')),
   category   text,
+  image      text,
+  description text,
+  unit       text,
   created_at timestamptz not null default now()
 );
 

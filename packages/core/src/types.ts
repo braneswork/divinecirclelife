@@ -38,6 +38,12 @@ export interface Offering {
   pillar?: PillarId;
   /** familia dentro de los productos: pan, bebidas, café… */
   category?: string;
+  /** foto (URL o data URL reducida); sin foto se muestra un círculo con sus iniciales */
+  image?: string;
+  /** lo que la gente necesita saber: ingredientes, duración, qué incluye */
+  description?: string;
+  /** presentación: "unidad", "800 g", "2 horas"… */
+  unit?: string;
 }
 
 export const CATEGORIES = ['pan', 'bebidas', 'café', 'cocina', 'otros'];

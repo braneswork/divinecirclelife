@@ -21,19 +21,27 @@ símbolo de Divine Circle (un círculo que toca a seis). Inspiración visual: la
 (anillos de luz con disco interior; cada círculo toca a seis).
 
 - **Inicio (la flor):** hoy al centro, seis módulos alrededor, cada uno con su ícono y el color
-  de un pilar: Pedidos (Food), Clientes (Family), Caja (Essence), Experiencias (Movement),
-  Círculo (Nature), Catálogo (Wisdom). Ajustes va en el engranaje de arriba.
+  de un pilar: Ventas arriba (Imagination), Experiencias (Movement), Clientes (Family),
+  Caja abajo (Essence), Círculo (Nature) y Productos (Food). En las esquinas: **− salida** y
+  **+ entrada**. Arriba: **?** ayuda (abre docs/AYUDA.md en la sección actual) y ajustes.
+- **+ entrada** abre la tienda (`Shop` del UI kit): venta rápida escrita o elegir del catálogo
+  con fotos; el cierre pide cliente, día y pago. La web usará la misma tienda.
+- **Productos y Experiencias:** panal de fotos ordenado por lo que generó cada oferta en el
+  mes; al entrar en una se ve su ficha (lo que generó, unidades, quién más la pide) y se edita
+  (foto, código, precio, presentación, familia, pilar, descripción).
+- **Instrucciones:** no van en pantalla; viven en `docs/AYUDA.md` y se abren con **?**.
 - **Entrar en un círculo:** tocarlo lo expande hasta llenar la pantalla; volver (logo, flecha,
   Escape o atrás del navegador) lo contrae a su lugar. Dentro de un módulo se puede volver a
   entrar en otro círculo (un cliente, por ejemplo).
 - **Navegación de íconos** abajo: cada círculo dice a dónde lleva.
-- **Dos acomodos:** panal uniforme (`hexCells`) para piezas iguales (clientes, catálogo,
-  experiencias, caja) y espiral de Doyle (`spiralCells`) para lo que tiene peso (los pedidos del
+- **Dos acomodos:** panal uniforme (`hexCells`) para piezas iguales (clientes, productos,
+  experiencias, caja, tipos de salida) y espiral de Doyle (`spiralCells`) para lo que tiene peso (los pedidos del
   día: el más grande va en el círculo más grande).
 - **Foco:** tocar algo lo trae al centro con sus acciones alrededor.
 
 El UI kit vive en `packages/ui` (`Stage`, `Bubble`, `hexCells`, `spiralCells`, `Zoom`,
-`IconNav`, `Icon`, `Focus`, `Donut`, `PayMark`, `PillarFlower`, toasts) y se ve en `apps/kit`.
+`IconNav`, `Icon`, `Photo`, `Shop`, `Sheet`, `Markdown`, `Focus`, `Donut`, `PayMark`,
+`PillarFlower`, toasts) y se ve en `apps/kit`.
 Para un módulo nuevo del hub: crear `modules/X.tsx` y agregarlo a `modules/index.ts`.
 
 ## Plata: clientes, facturas y caja

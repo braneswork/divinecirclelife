@@ -3,7 +3,7 @@
 Sistema de Divine Circle: pan de masa madre, experiencias humanas y los proyectos que nos rodean.
 
 ```
-apps/hub        Hub interno (pedidos, catálogo, círculo). Funciona sin señal.
+apps/hub        Hub interno en composición circular (pan, catálogo, círculo). Funciona sin señal.
 apps/web        Web pública tipo revista; los pedidos caen directo al hub.
 packages/core   Modelo del círculo, entrada rápida de pedidos, totales (con pruebas).
 packages/brand  Paleta, fuentes y logos compartidos.

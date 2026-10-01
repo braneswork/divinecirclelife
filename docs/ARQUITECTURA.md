@@ -1,5 +1,20 @@
 # Arquitectura · el círculo
 
+## Composición
+
+El hub no usa pestañas ni listas: todo es **algo al centro con cosas alrededor**, como el
+símbolo de Divine Circle (un círculo rodeado de seis).
+
+- **Inicio (la flor):** hoy al centro, seis módulos alrededor (Pan, Experiencias, Café,
+  Círculo, Catálogo, Ajustes) y los proyectos como satélites en el anillo exterior.
+- **Cada módulo:** su tema al centro y sus elementos en órbita. En Pan, el día al centro,
+  un anillo con lo que hay que hornear y los pedidos orbitando.
+- **Foco:** tocar un elemento lo trae al centro con sus acciones alrededor.
+- La flor de arriba siempre regresa al inicio.
+
+Piezas en `apps/hub/src/orbit/Orbit.tsx`: `Stage`, `Track`, `Bubble`, `around()`, `Donut`, `Focus`.
+Para un módulo nuevo: crear `modules/X.tsx` con esas piezas y agregarlo a `modules/index.ts`.
+
 ## Modelo
 
 - **Proyectos** en anillos: `nucleo` (Divine Circle), `aliado` (Take Off, Branes), `vecino`

@@ -1,30 +1,22 @@
 import { useEffect, useState } from 'react';
 import { sb } from './supabase';
 import { syncNow } from './cloud';
-import { Pedidos } from './views/Pedidos';
-import { Catalogo } from './views/Catalogo';
-import { Circulo } from './views/Circulo';
-import { Ajustes } from './views/Ajustes';
-import logoLight from '@dc/brand/assets/logo-light.png';
+import { MODULES, type ModuleId } from './modules';
+import { Home } from './modules/Home';
+import mark from '@dc/brand/assets/mark.png';
 
-const TABS = [
-  { id: 'pedidos', label: 'Pedidos', view: Pedidos },
-  { id: 'catalogo', label: 'Catálogo', view: Catalogo },
-  { id: 'circulo', label: 'Círculo', view: Circulo },
-  { id: 'ajustes', label: 'Ajustes', view: Ajustes },
-] as const;
-type TabId = (typeof TABS)[number]['id'];
+type Route = 'home' | ModuleId;
 
-const fromHash = (): TabId => {
+const fromHash = (): Route => {
   const h = location.hash.slice(1);
-  return (TABS.find(t => t.id === h)?.id ?? 'pedidos') as TabId;
+  return (MODULES.find(m => m.id === h)?.id ?? 'home') as Route;
 };
 
 export function App() {
-  const [tab, setTab] = useState<TabId>(fromHash);
+  const [route, setRoute] = useState<Route>(fromHash);
 
   useEffect(() => {
-    const onHash = () => setTab(fromHash());
+    const onHash = () => { setRoute(fromHash()); scrollTo(0, 0); };
     addEventListener('hashchange', onHash);
     return () => removeEventListener('hashchange', onHash);
   }, []);
@@ -36,24 +28,20 @@ export function App() {
     return () => data.subscription.unsubscribe();
   }, []);
 
-  const View = TABS.find(t => t.id === tab)!.view;
+  const mod = MODULES.find(m => m.id === route);
 
   return (
     <div className="shell">
-      <header className="topbar">
-        <img src={logoLight} alt="Divine Circle" className="logo" />
-        <span className="eyebrow">Hub</span>
+      <header className="head">
+        <a href="#" className="home-mark" aria-label="Volver al centro">
+          <img src={mark} alt="" />
+        </a>
+        <div className="head-title">
+          <span className="eyebrow">Divine Circle</span>
+          <h1 className="title">{mod ? mod.label : 'Hub'}</h1>
+        </div>
       </header>
-      <nav className="tabs" aria-label="Secciones">
-        {TABS.map(t => (
-          <a key={t.id} href={'#' + t.id} className={t.id === tab ? 'on' : ''} aria-current={t.id === tab ? 'page' : undefined}>
-            {t.label}
-          </a>
-        ))}
-      </nav>
-      <main className="wrap">
-        <View />
-      </main>
+      <main className="wrap">{mod ? <mod.view /> : <Home />}</main>
     </div>
   );
 }

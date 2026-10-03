@@ -4,7 +4,7 @@
    ya vendido, y el total, que se puede escribir directo. */
 
 import { useState } from 'react';
-import { PAY, WEEKDAY_SHORT, WEEK_ORDER, addDays, colones, fromISODate, matchClient, priceOn, type Order, type PayState, type Recurring } from '@dc/core';
+import { PAY, WEEKDAY_SHORT, WEEK_ORDER, addDays, colones, dayLabel, fromISODate, matchClient, priceOn, type Order, type PayState, type Recurring } from '@dc/core';
 import { PayMark, Sheet, Stepper, cartLines, useToast, type Cart } from '@dc/ui';
 import { now as nowIso, removeOrder, restoreOrder, saveOrder, saveRecurring, today, updateOrder, useStore } from '../store';
 import { HelpDot } from '../HelpDot';
@@ -76,6 +76,9 @@ export function OrderForm({ initial, editId, inline, onCart, onClose, onDone, on
   const [adding, setAdding] = useState(false);
   const [discText, setDiscText] = useState(initial.discount ? String(initial.discount) : '');
   const [paidText, setPaidText] = useState(initial.paidAmount ? String(initial.paidAmount) : '');
+  const [more, setMore] = useState(false);
+  const [replace, setReplace] = useState(true);
+  const orders = useStore(s => s.orders);
   // pedido o venta: lo que diga la persona; si no, lo esperado, y una fecha futura siempre es pedido
   const [kindSet, setKindSet] = useState<Kind | null>(editing ? kindOf(editing) : initial.weekly ? 'pedido' : null);
   const kind: Kind = kindSet ?? (date > now ? 'pedido' : initial.kind ?? 'venta');
@@ -96,6 +99,12 @@ export function OrderForm({ initial, editId, inline, onCart, onClose, onDone, on
   const span = kind === 'venta' ? Array.from({ length: 7 }, (_, i) => addDays(now, i - 6)) : Array.from({ length: 7 }, (_, i) => addDays(now, i));
   const dates = span.includes(date) ? span : [date, ...span].sort();
   const isFijo = !!editing?.recurringId;
+  // una venta nueva para alguien que tenía un pedido sin entregar (de ese día o de
+  // los 3 anteriores): lo más probable es que lo reemplace (se llevó otra cosa)
+  const sameClient = (o: Order) => (known ? o.clientId === known.id : !!client.trim() && o.client.toLowerCase() === client.trim().toLowerCase());
+  const replaces = !editing && kind === 'venta'
+    ? orders.filter(o => kindOf(o) === 'pedido' && o.status !== 'cancelado' && sameClient(o) && o.date <= date && o.date >= addDays(date, -3))
+    : [];
   const repeat = kind === 'pedido' && weekly && !isFijo;
 
   function typeTotal(t: string) {
@@ -136,28 +145,30 @@ export function OrderForm({ initial, editId, inline, onCart, onClose, onDone, on
       return onDone(name, date, kind);
     }
     const o = saveOrder(input);
+    if (replace && replaces.length) {
+      // el pedido reemplazado se quita (si era de un fijo, ese día queda saltado)
+      const gone = replaces.map(r => removeOrder(r.id)).filter((x): x is Order => !!x);
+      toast(`Reemplazó ${gone.length === 1 ? 'el pedido' : `${gone.length} pedidos`} de ${o.client}`, { label: 'Deshacer', run: () => gone.forEach(restoreOrder) });
+    }
     onDone(o.client, o.date, kind);
   }
 
-  function remove() {
-    if (!editing) return;
-    const gone = removeOrder(editing.id);
-    onClose();
-    if (gone) toast(`Borrado: ${gone.client}`, { label: 'Deshacer', run: () => restoreOrder(gone) });
-  }
+  const dayText = date === now ? 'hoy' : date === addDays(now, 1) ? 'mañana' : date === addDays(now, -1) ? 'ayer' : `${'dlmmjvs'[fromISODate(date).getDay()]} ${fromISODate(date).getDate()}`;
+  const showClient = more || !client.trim();
 
   return (
     <form onSubmit={save} className={'order-form' + (inline ? ' inline' : '')}>
       {!inline && <h2>{kind === 'venta' ? 'Nueva venta' : 'Nuevo pedido'}</h2>}
       <div className="order-top">
         <div className="kind-pick" role="radiogroup" aria-label="Pedido o venta">
-          <button type="button" role="radio" aria-checked={kind === 'pedido'} className={kind === 'pedido' ? 'on' : ''} onClick={() => setKindSet('pedido')}>Pedido<small>por entregar</small></button>
-          <button type="button" role="radio" aria-checked={kind === 'venta'} className={kind === 'venta' ? 'on' : ''} onClick={() => { setKindSet('venta'); setWeekly(false); }}>Vendido<small>ya entregado</small></button>
+          <button type="button" role="radio" aria-checked={kind === 'pedido'} className={kind === 'pedido' ? 'on' : ''} onClick={() => setKindSet('pedido')}>Pedido</button>
+          <button type="button" role="radio" aria-checked={kind === 'venta'} className={kind === 'venta' ? 'on' : ''} onClick={() => { setKindSet('venta'); setWeekly(false); }}>Vendido</button>
         </div>
         <label className="total-edit">
-          <small>total{override != null ? ' escrito' : ''}</small>
           <input inputMode="numeric" value={totalText ?? colones(total)} onChange={e => typeTotal(e.target.value)} onFocus={e => e.target.select()} onBlur={() => setTotalText(null)} aria-label="Total (se puede escribir)" />
-          {override != null && <button type="button" className="link" onClick={() => { setOverride(undefined); setTotalText(null); }}>calcular</button>}
+          {override != null
+            ? <button type="button" className="link" onClick={() => { setOverride(undefined); setTotalText(null); }}>calcular</button>
+            : discount > 0 && <small>antes {colones(subtotal)}</small>}
         </label>
       </div>
 
@@ -176,84 +187,90 @@ export function OrderForm({ initial, editId, inline, onCart, onClose, onDone, on
             <button type="button" key={o.id} className="chip" title={o.name} onClick={() => setCart({ ...cart, [o.id]: 1 })}>+ {o.code}</button>
           ))}
         </div>
-      ) : (
-        <button type="button" className="chip add-more" onClick={() => setAdding(true)}>+ agregar producto</button>
-      ))}
+      ) : null)}
 
-      <label className="field wide">Cliente
-        <input value={client} onChange={e => setClient(e.target.value)} list="dc-clients" placeholder="Nombre o cliente registrado" autoFocus={!client && !inline} />
-        <datalist id="dc-clients">{clients.filter(c => c.active).map(c => <option key={c.id} value={c.name} />)}</datalist>
-        {known && <small className="ok-text">{known.name} · {known.billing === 'mensual' ? 'va a su factura mensual' : 'contado'}</small>}
-      </label>
-      <div className="field wide">{repeat ? 'Empieza' : kind === 'venta' ? 'Día de la venta' : 'Día de entrega'}
-        <div className="beads">
-          {dates.map(d => (
-            <button type="button" key={d} className={'bead' + (d === date ? ' on' : '')} onClick={() => setDate(d)} aria-pressed={d === date}>
-              <span>{d === now ? 'hoy' : 'dlmmjvs'[fromISODate(d).getDay()]}</span><b>{fromISODate(d).getDate()}</b>
-            </button>
-          ))}
-        </div>
-      </div>
-      {kind === 'pedido' && (
-        <div className="field wide">Se repite
-          {isFijo ? (
-            <span className="muted">↻ sale de un pedido fijo{onFijo && <button type="button" className="link" onClick={() => onFijo(editing!.recurringId!)}>ver el fijo</button>}</span>
-          ) : (
-            <>
-              <div className="row">
-                <button type="button" className={'chip' + (!weekly ? ' on' : '')} onClick={() => setWeekly(false)}>solo esta vez</button>
-                <button type="button" className={'chip' + (weekly ? ' on' : '')} onClick={() => { setWeekly(true); if (!days.length) setDays([fromISODate(date).getDay()]); }}>↻ cada semana</button>
-              </div>
-              {weekly && (
-                <div className="week small">
-                  {WEEK_ORDER.map(w => (
-                    <button type="button" key={w} className={'week-day' + (days.includes(w) ? ' on' : '')} aria-pressed={days.includes(w)}
-                      onClick={() => setDays(days.includes(w) ? days.filter(x => x !== w) : [...days, w].sort())}><span>{WEEKDAY_SHORT[w]}</span></button>
-                  ))}
-                </div>
+      <span className="pay-pick" aria-label="Pago">
+        {(['paid', 'pending', 'credit'] as const).map(p => (
+          <button type="button" key={p} className={'chip pay-' + p + (pay === p ? ' on' : '')} aria-pressed={pay === p} onClick={() => setPay(p)}>
+            <PayMark state={p} size={18} /> {PAY[p].label}
+          </button>
+        ))}
+      </span>
+
+      {replaces.length > 0 && (
+        <button type="button" className={'replace' + (replace ? ' on' : '')} aria-pressed={replace} onClick={() => setReplace(!replace)}>
+          <span className="box">{replace ? '✓' : ''}</span>
+          <span>Reemplaza {replaces.length === 1 ? 'su pedido' : 'sus pedidos'} de {replaces.map(r => `${dayLabel(r.date, now).toLowerCase()} (${r.items.map(i => `${i.qty}${i.code}`).join(' ')})`).join(', ')}</span>
+        </button>
+      )}
+
+      {showClient && (
+        <label className="field wide">Cliente
+          <input value={client} onChange={e => setClient(e.target.value)} list="dc-clients" placeholder="Nombre o cliente registrado" autoFocus={!client && !inline} />
+          <datalist id="dc-clients">{clients.filter(c => c.active).map(c => <option key={c.id} value={c.name} />)}</datalist>
+          {known && <small className="ok-text">{known.name} · {known.billing === 'mensual' ? 'va a su factura mensual' : 'contado'}</small>}
+        </label>
+      )}
+
+      {more ? (
+        <>
+          <div className="field wide">{repeat ? 'Empieza' : kind === 'venta' ? 'Día de la venta' : 'Día de entrega'}
+            <div className="beads">
+              {dates.map(d => (
+                <button type="button" key={d} className={'bead' + (d === date ? ' on' : '')} onClick={() => setDate(d)} aria-pressed={d === date}>
+                  <span>{d === now ? 'hoy' : 'dlmmjvs'[fromISODate(d).getDay()]}</span><b>{fromISODate(d).getDate()}</b>
+                </button>
+              ))}
+            </div>
+          </div>
+          {kind === 'pedido' && (
+            <div className="field wide">Se repite
+              {isFijo ? (
+                <span className="muted">↻ sale de un pedido fijo{onFijo && <button type="button" className="link" onClick={() => onFijo(editing!.recurringId!)}>ver el fijo</button>}</span>
+              ) : (
+                <>
+                  <div className="row">
+                    <button type="button" className={'chip' + (!weekly ? ' on' : '')} onClick={() => setWeekly(false)}>solo esta vez</button>
+                    <button type="button" className={'chip' + (weekly ? ' on' : '')} onClick={() => { setWeekly(true); if (!days.length) setDays([fromISODate(date).getDay()]); }}>↻ cada semana</button>
+                  </div>
+                  {weekly && (
+                    <div className="week small">
+                      {WEEK_ORDER.map(w => (
+                        <button type="button" key={w} className={'week-day' + (days.includes(w) ? ' on' : '')} aria-pressed={days.includes(w)}
+                          onClick={() => setDays(days.includes(w) ? days.filter(x => x !== w) : [...days, w].sort())}><span>{WEEKDAY_SHORT[w]}</span></button>
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
-            </>
+            </div>
           )}
-        </div>
-      )}
-      {!(repeat && !editing) && (
-        <label className="field wide">Descuento de esta vez
-          <span className="row money-row">
-            <input inputMode="decimal" value={discText} onChange={e => setDiscText(e.target.value)} placeholder="₡ o %, ej. 1000 o 10%" />
-            {discount > 0 && <b className="minus">−{colones(discount)}</b>}
-          </span>
-        </label>
-      )}
-      <div className="field wide pay-row"><span>Pago <HelpDot topic="pago" label="Marca de pago" /></span>
-        <span className="pay-pick">
-          {(['paid', 'pending', 'credit'] as const).map(p => (
-            <button type="button" key={p} className={'chip pay-' + p + (pay === p ? ' on' : '')} aria-pressed={pay === p} onClick={() => setPay(p)}>
-              <PayMark state={p} size={18} /> {PAY[p].label}
-            </button>
-          ))}
-        </span>
-      </div>
-      {pay === 'pending' && !(repeat && !editing) && (
-        <label className="field wide">Abonó (pagó una parte)
-          <span className="row money-row">
-            <input inputMode="numeric" value={paidText} onChange={e => setPaidText(e.target.value)} placeholder="₡ que ya pagó" />
-            {paid > 0 && <b className="minus">debe {colones(total - paid)}</b>}
-          </span>
-        </label>
-      )}
-      <label className="field wide">Nota<input value={note} onChange={e => setNote(e.target.value)} placeholder="Opcional" /></label>
+          {!(repeat && !editing) && (
+            <div className="row two">
+              <label className="field">Descuento
+                <input inputMode="decimal" value={discText} onChange={e => setDiscText(e.target.value)} placeholder="₡ o %" />
+              </label>
+              {pay === 'pending' && (
+                <label className="field">Abonó
+                  <input inputMode="numeric" value={paidText} onChange={e => setPaidText(e.target.value)} placeholder="₡ pagó" />
+                </label>
+              )}
+            </div>
+          )}
+          {paid > 0 && <small className="warn-text">debe {colones(total - paid)}</small>}
+          <label className="field wide">Nota<input value={note} onChange={e => setNote(e.target.value)} placeholder="Opcional" /></label>
+        </>
+      ) : null}
 
       <div className="checkout-foot">
-        {editing ? (
-          <span className="row">
-            <button type="button" className="chip danger" onClick={remove}>Borrar</button>
-            {editing.status === 'cancelado'
-              ? <button type="button" className="chip" onClick={() => { updateOrder(editing.id, { status: 'pendiente' }); onClose(); }}>Reactivar</button>
-              : kind === 'pedido' && <button type="button" className="chip" onClick={() => { updateOrder(editing.id, { status: 'cancelado' }); onClose(); }}>No se hizo</button>}
-          </span>
-        ) : (
-          <span>Total <b>{colones(total)}</b>{discount > 0 && <small className="muted"> antes {colones(subtotal)}</small>}</span>
-        )}
+        <span className="row">
+          {!adding && others.length > 0 && <button type="button" className="chip" onClick={() => setAdding(true)}>+ producto</button>}
+          {!more && (
+            <button type="button" className="chip more" onClick={() => setMore(true)}>
+              {dayText}{weekly ? ' · ↻' : ''}{discount ? ` · −${colones(discount)}` : ''}{paid ? ` · abonó ${colones(paid)}` : ''}{note ? ' · nota' : ''} ▾
+            </button>
+          )}
+        </span>
         <button className="shop-go">{editing ? 'Guardar' : repeat ? 'Crear fijo' : kind === 'venta' ? 'Anotar venta' : 'Anotar pedido'}</button>
       </div>
     </form>

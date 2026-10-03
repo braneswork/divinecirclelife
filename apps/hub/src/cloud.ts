@@ -2,7 +2,7 @@
    lo de la nube gana para los mismos ids, y lo que solo existe en el
    dispositivo (creado sin señal o antes de conectar Supabase) se sube. */
 
-import { ensureRecurring, getState, replaceState, type State } from './store';
+import { dropDuplicates, ensureRecurring, getState, replaceState, type State } from './store';
 import { TABLES, claimRole, pullAll, upsertMany } from './sync';
 
 const FIRST = 'dc-synced-once';
@@ -35,6 +35,7 @@ export async function syncNow(): Promise<boolean> {
   }
   try { localStorage.setItem(FIRST, new Date().toISOString()); } catch { /* nada */ }
   replaceState(next as unknown as State);
+  dropDuplicates();
   ensureRecurring();
   return true;
 }

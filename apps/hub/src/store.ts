@@ -4,7 +4,7 @@
 
 import { useSyncExternalStore } from 'react';
 import {
-  SEED_CLIENTS, SEED_EXPERIENCES, SEED_OFFERINGS, SEED_PROJECTS, addDays, materialize, priceOn, matchClient, removableFuture, toISODate,
+  SEED_CLIENTS, SEED_EXPERIENCES, SEED_OFFERINGS, SEED_PROJECTS, addDays, duplicateRecurring, materialize, priceOn, matchClient, removableFuture, toISODate,
   type Client, type Expense, type Invoice, type Offering, type Order, type PayState, type Project, type QuickLine, type Recurring,
 } from '@dc/core';
 import { pushRow, deleteRow, type Table } from './sync';
@@ -100,6 +100,8 @@ export interface NewOrder {
   paidAmount?: number | null;
   pay: PayState;
   note?: string;
+  /** pedido (por entregar) o venta ya entregada; al editar se conserva si no se dice */
+  status?: Order['status'];
   /** volverlo pedido fijo semanal (el día de la semana de `date`) */
   weekly?: boolean;
 }
@@ -122,7 +124,7 @@ export function saveOrder(input: NewOrder, replaceId?: string): Order {
     amountOverride: input.amountOverride,
     ...('discount' in input ? { discount: input.discount as number } : prev?.discount != null ? { discount: prev.discount } : {}),
     ...('paidAmount' in input ? { paidAmount: input.paidAmount as number } : prev?.paidAmount != null ? { paidAmount: prev.paidAmount } : {}),
-    status: prev?.status ?? 'pendiente',
+    status: input.status ?? prev?.status ?? 'pendiente',
     // al editar se conserva la marca de pago salvo que se escriba "pagado" o "credito"
     pay: input.pay !== 'pending' ? input.pay : (prev?.pay ?? 'pending'),
     note: input.note,
@@ -228,11 +230,21 @@ export const RECURRING_DAYS = 14;
 export function ensureRecurring() {
   const created = materialize({
     recurring: state.recurring, orders: state.orders, offerings: state.offerings, clients: state.clients,
-    from: today(), to: addDays(today(), RECURRING_DAYS - 1), now: now(), newId: () => crypto.randomUUID(),
+    from: today(), to: addDays(today(), RECURRING_DAYS - 1), now: now(),
   });
-  if (!created.length) return;
+  if (!created.length) return [];
   commit({ ...state, orders: [...state.orders, ...created] });
   created.forEach(o => pushRow('orders', o));
+  return created;
+}
+
+/** Borra ventas repetidas de un mismo fijo y día (de cuando dos dispositivos las creaban por separado). */
+export function dropDuplicates() {
+  const drop = duplicateRecurring(state.orders);
+  if (!drop.length) return;
+  const ids = new Set(drop.map(o => o.id));
+  commit({ ...state, orders: state.orders.filter(o => !ids.has(o.id)) });
+  drop.forEach(o => deleteRow('orders', o.id));
 }
 
 /** Quita las ventas futuras aún intactas de un fijo (para regenerarlas o al pausar/borrar). */
@@ -245,10 +257,14 @@ function clearFuture(recurringId: string) {
 }
 
 export function saveRecurring(r: Recurring) {
-  const existed = state.recurring.some(x => x.id === r.id);
-  if (existed) clearFuture(r.id);
+  // se rehacen sus ventas futuras intactas; las que vuelven a salir tienen el
+  // mismo id (se sobrescriben), solo se borran en la nube las que ya no van
+  const gone = state.recurring.some(x => x.id === r.id) ? removableFuture(state.orders, r.id, today()) : [];
+  const ids = new Set(gone.map(o => o.id));
+  commit({ ...state, orders: state.orders.filter(o => !ids.has(o.id)) });
   upsert('recurring', r);
-  ensureRecurring();
+  const again = new Set(ensureRecurring().map(o => o.id));
+  gone.filter(o => !again.has(o.id)).forEach(o => deleteRow('orders', o.id));
 }
 
 export function removeRecurring(r: Recurring) {

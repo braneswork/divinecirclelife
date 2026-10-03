@@ -11,7 +11,7 @@ el logo de arriba (o la flecha, o Escape) te devuelve al centro. Abajo, cada íc
 - Sin señal, el hub sigue funcionando en un dispositivo donde ya habías entrado.
 
 ### Círculo o historial {#historial}
-- En Clientes (dentro de cada cliente) y Caja hay un interruptor **Círculo / Historial**; Ventas tiene **Programa / Día / Semanal / Historial**.
+- En Clientes (dentro de cada cliente) y Caja hay un interruptor **Círculo / Historial**; Ventas tiene **Ventas / Pedidos / Fijos**.
 - **Historial** muestra los movimientos en orden, agrupados por día, con la marca de pago (✓ ✕ +) y el monto; arriba de cada día, el neto.
 - En Caja el historial junta ventas y salidas del mes; toca una salida para borrarla.
 - El hub recuerda la vista elegida en cada pantalla.
@@ -27,18 +27,22 @@ el logo de arriba (o la flecha, o Escape) te devuelve al centro. Abajo, cada íc
 - Arriba, la venta rápida: escribe, por ejemplo `2C 1MS Soleida`, y presiona Enter. Se abre la ficha de la venta ya llena para revisarla.
 - Debajo, la tienda: todo el catálogo con fotos. Toca la foto para ver la ficha; usa − y + para la cantidad.
 - **Continuar** abre la misma ficha.
-- **La ficha de la venta** es igual desde la venta rápida, la tienda o **editar**: cantidades, **+ agregar producto**, cliente, día, **solo esta vez / ↻ semanal** (con los días), marca de pago y nota. Si el cliente está registrado se aplica su descuento. Enter o **Anotar venta** guarda.
+- **La ficha** es la misma desde la venta rápida, la tienda o al abrir una fila: **Pedido / Vendido**, total editable, cantidades, **+ agregar producto**, cliente, día, **solo esta vez / ↻ cada semana** (solo pedidos), descuento, pago, abono y nota. Desde Inicio, hoy es **Vendido** y una fecha futura es **Pedido**; se puede cambiar arriba.
 - Esta tienda es la misma que verá la gente en la web.
 
 ### Ventas {#ventas}
-- Ventas abre en **Programa**: lo que viene, día por día (Hoy, Mañana, …). Cada día muestra cuántos pedidos y cuánto suman, los círculos de lo que hay que preparar y cada pedido con su marca de pago, productos, monto y estado. Toca un pedido para su detalle; toca el título del día para verlo en círculo.
-- Las otras pestañas: **Día** (la espiral de un día, eligiendo el día arriba), **Semanal** (pedidos fijos) e **Historial** (últimos 30 días).
-- En **Día**: el día va al centro con el total, lo que no se ha pagado (✕) y el crédito (+).
-- El anillo de colores alrededor del centro es lo que hay que preparar; los círculos de abajo lo detallan (16 BB = 16 Burger Buns).
-- Las ventas del día forman una espiral: la más grande ocupa el círculo más grande.
-- Los días de la semana van arriba; ‹ y › para moverte.
-- Toca una venta para ver su detalle en un panel (abajo en el teléfono, al costado en la computadora): avanzar estado, cambiar pago, editar, cancelar o borrar (se puede deshacer).
-- Estados: por preparar (anillo gris), en proceso (anillo dorado punteado), listo (relleno dorado), entregado (anillo verde).
+Ventas tiene tres listas. Lo que anotas cae en la lista de la pestaña donde lo escribes.
+
+- **Ventas**: lo que ya se vendió o entregó, día por día (hoy primero; ‹ › o los circulitos para otro día). Arriba del día: el total y cuánto está ✓ pagado, ✕ sin pagar y + en crédito. Si horneaste y vendiste, escribe aquí: `2C 1MS Soleida pagado`.
+- **Pedidos**: lo que se anota antes y falta entregar, por día de entrega (con los círculos de lo que hay que preparar). Los **atrasados** salen arriba en rojo. El **✓** de cada fila lo marca entregado y pasa a Ventas; **✓ entregar todos** hace lo mismo con todo el día.
+- **Fijos**: los pedidos que se repiten cada semana (Mantarraya…). Cada semana crean sus pedidos solos.
+- En **Ventas**, si ese día tenía pedidos sin entregar, salen debajo para entregarlos ahí mismo.
+
+**Cada fila**: la marca de pago (tócala para cambiarla), quién, qué y cuánto. Toca la fila y se abre ahí mismo su ficha, ya editable:
+- arriba, **Pedido / Vendido** y el **total**, que puedes escribir directo (vuelve al calculado con *calcular*);
+- cantidades, + agregar producto, cliente, día, si se repite, descuento, pago (✓ ✕ +), abono y nota;
+- **Guardar**, **Borrar** (se puede deshacer) y, en un pedido, **No se hizo** (lo quita sin borrarlo).
+- Una fecha futura siempre es pedido.
 - **M** en una venta: el cliente paga mensual; **F**: ya está en una factura.
 
 #### Venta rápida
@@ -55,10 +59,11 @@ Lo escrito llena la ficha de la venta; ahí se puede cambiar todo antes de guard
 
 ### Pedidos fijos (semanales) {#fijos}
 - Un fijo se repite ciertos días de la semana: cada semana o cada 2 semanas.
-- Se crean con **↻ semanal** en la ficha de la venta (eligiendo los días; también al editar una venta), escribiendo `semanal` en la venta rápida, o en Ventas → **Semanal** → **+ Nuevo fijo**.
+- Se crean con **↻ cada semana** en la ficha de un pedido (eligiendo los días), escribiendo `semanal` en lo rápido, o en Ventas → **Fijos** → **+ Nuevo fijo**.
+- Cada pedido de un fijo tiene un identificador propio de ese fijo y ese día: aunque lo abras en el teléfono y en la computadora, no se duplica. Si antes quedaron repetidos, al sincronizar se deja uno (el que ya tiene pago o cambios).
 - El hub crea solo las ventas de los próximos 14 días. Llevan un **↻**. Cada una se prepara, se cobra y se factura como cualquier venta.
 - Si borras la venta de un día, ese día queda saltado y no vuelve a aparecer. Cancelarla también la deja fuera.
-- **Ventas → Semanal**: la semana de lunes a domingo con las unidades fijas de cada día (toca un día para ver qué preparar), el total por semana y la lista de fijos. Toca uno para cambiar días, productos, pago, fechas, **pausar** o **borrar**. Pausar o cambiar un fijo rehace sus ventas futuras que aún no se tocaron.
+- **Ventas → Fijos**: la semana de lunes a domingo con las unidades fijas de cada día (toca un día para ver qué preparar), el total por semana y la lista de fijos. Toca uno para cambiar días, productos, pago, fechas, **pausar** o **borrar**. Pausar o cambiar un fijo rehace sus ventas futuras que aún no se tocaron.
 - Desde una venta con ↻, la acción **↻ fijo** abre su fijo.
 
 ### Marca de pago {#pago}

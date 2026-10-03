@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { materialize, occursOn, perWeek, recurringValue, removableFuture } from './recurring';
+import { materialize, occursOn, perWeek, recurringValue, removableFuture, duplicateRecurring, stableId } from './recurring';
 import { parseQuick } from './quick';
 import { SEED_CLIENTS, SEED_OFFERINGS } from './seed';
 import type { Order, Recurring } from './types';
@@ -51,5 +51,18 @@ describe('pedidos fijos', () => {
     const r = parseQuick('16BB Mantarraya @vie semanal', SEED_OFFERINGS, TODAY);
     expect(r).toMatchObject({ ok: true, weekly: true, date: '2026-10-02', client: 'Mantarraya' });
     expect(parseQuick('1C Ana', SEED_OFFERINGS, TODAY)).toMatchObject({ weekly: false });
+  });
+});
+
+describe('ids estables y duplicados', () => {
+  it('el mismo fijo y día da el mismo id en cualquier dispositivo', () => {
+    expect(stableId('r1|2026-10-02')).toBe(stableId('r1|2026-10-02'));
+    expect(stableId('r1|2026-10-02')).not.toBe(stableId('r1|2026-10-03'));
+    expect(stableId('r1|2026-10-02')).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-a[0-9a-f]{3}-[0-9a-f]{12}$/);
+  });
+  it('de dos ventas del mismo fijo y día se queda la que ya se cobró', () => {
+    const base = { client: 'Manta', recurringId: 'r1', date: '2026-10-02', items: [], status: 'pendiente', pay: 'pending', source: 'hub', createdAt: 'a', updatedAt: 'a' } as const;
+    const a = { ...base, id: 'a' }, b = { ...base, id: 'b', pay: 'paid' as const }, c = { ...base, id: 'c', date: '2026-10-03' };
+    expect(duplicateRecurring([a, b, c]).map(o => o.id)).toEqual(['a']);
   });
 });

@@ -56,7 +56,7 @@ export function Timeline({ items, today, empty = 'Sin movimientos.', order = 'de
   );
 }
 
-export type ViewMode = 'circulo' | 'hoy' | 'proximos' | 'historial' | 'semanal' | 'programa';
+export type ViewMode = 'circulo' | 'hoy' | 'proximos' | 'historial' | 'semanal' | 'programa' | 'pedidos' | 'ventas' | 'fijos';
 
 /** Interruptor Círculo / Historial, recordado por pantalla en este dispositivo. */
 export function useViewMode(key: string, options: ViewMode[] = ['circulo', 'historial']): [ViewMode, (v: ViewMode) => void] {
@@ -77,6 +77,9 @@ const VIEW_LABEL: Record<ViewMode, { label: string; icon: string }> = {
   proximos: { label: 'Próximos', icon: 'proximos' },
   historial: { label: 'Historial', icon: 'historial' },
   semanal: { label: 'Semanal', icon: 'repetir' },
+  pedidos: { label: 'Pedidos', icon: 'proximos' },
+  ventas: { label: 'Ventas', icon: 'ventas' },
+  fijos: { label: 'Fijos', icon: 'repetir' },
 };
 
 export function ViewToggle({ value, onChange, options = ['circulo', 'historial'] }: { value: ViewMode; onChange: (v: ViewMode) => void; options?: ViewMode[] }) {

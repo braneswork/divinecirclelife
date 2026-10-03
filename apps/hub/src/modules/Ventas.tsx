@@ -10,11 +10,11 @@ import {
   PAY, QUICK_ERRORS, addDays, bakeSummary, colones, dayLabel, fromISODate, matchClient, orderDue, orderTotal, parseQuick, payTotals, priceOn,
   type Order,
 } from '@dc/core';
-import { PayMark, ViewToggle, useToast, useViewMode } from '@dc/ui';
+import { Icon, PayMark, ViewToggle, useToast, useViewMode } from '@dc/ui';
 import { HelpDot } from '../HelpDot';
 import { Fijos, FijoSheet } from './Fijos';
 import { OrderForm, OrderSheet, draftFromLines, kindOf, orderDraft, type Kind, type OrderDraft } from './OrderSheet';
-import { today, updateOrder, useStore } from '../store';
+import { removeOrder, restoreOrder, today, updateOrder, useStore } from '../store';
 
 const TABS = ['ventas', 'pedidos', 'fijos'] as const;
 
@@ -63,7 +63,11 @@ export function Ventas() {
     <ul className="prog-list">
       {list.map(o => (
         <OrderRow key={o.id} o={o} open={open === o.id} onToggle={() => toggle(o.id)} onClose={() => setOpen(null)} onFijo={setFijo}
-          onDeliver={quick ? () => { updateOrder(o.id, { status: 'entregado' }); toast(`Entregado: ${o.client}`, { label: 'Deshacer', run: () => updateOrder(o.id, { status: o.status }) }); } : undefined} />
+          onDeliver={quick ? () => { updateOrder(o.id, { status: 'entregado' }); toast(`Entregado: ${o.client}`, { label: 'Deshacer', run: () => updateOrder(o.id, { status: o.status }) }); } : undefined}
+          onRemove={() => {
+            const gone = removeOrder(o.id);
+            if (gone) toast(`${kindOf(o) === 'pedido' ? 'No se hizo' : 'Borrada'}: ${o.client}`, { label: 'Deshacer', run: () => restoreOrder(gone) });
+          }} />
       ))}
     </ul>
   );
@@ -126,7 +130,7 @@ export function Ventas() {
             <section className="prog-day waiting">
               <div className="prog-head static">
                 <strong>Pedidos de este día</strong>
-                <button className="chip" onClick={() => deliver(waitingToday)}>✓ entregar todos</button>
+                {waitingToday.length > 1 && <button className="chip" onClick={() => deliver(waitingToday)}>✓ entregar todos</button>}
               </div>
               {rows(waitingToday, true)}
             </section>
@@ -156,13 +160,11 @@ function Pedidos({ pedidos, now, deliver, rows }: { pedidos: Order[]; now: strin
       <section key={key} className={'prog-day ' + cls}>
         <div className="prog-head static">
           <strong>{title}</strong>
-          <span>{list.length} · {colones(list.reduce((a, o) => a + orderTotal(o), 0))}</span>
-        </div>
-        <div className="prep">
-          {bakeSummary(list).map((p, i) => <span key={p.code} className={'prep-dot s' + (i % 6)}><b>{p.qty}</b>{p.code}</span>)}
+          <span className="prep mini">{bakeSummary(list).map((p, i) => <span key={p.code} className={'prep-dot s' + (i % 6)}><b>{p.qty}</b>{p.code}</span>)}</span>
+          <span>{colones(list.reduce((a, o) => a + orderTotal(o), 0))}</span>
         </div>
         {rows(sorted, true)}
-        {key <= now && <button className="chip deliver-all" onClick={() => deliver(list)}>✓ entregar todos</button>}
+        {key <= now && list.length > 1 && <button className="chip deliver-all" onClick={() => deliver(list)}>✓ entregar todos</button>}
       </section>
     );
   };
@@ -176,9 +178,10 @@ function Pedidos({ pedidos, now, deliver, rows }: { pedidos: Order[]; now: strin
 }
 
 /** Una fila: marca de pago (se toca para cambiarla), quién, qué, cuánto. Al tocarla se abre su ficha. */
-function OrderRow({ o, open, onToggle, onClose, onDeliver, onFijo }: {
-  o: Order; open: boolean; onToggle: () => void; onClose: () => void; onDeliver?: () => void; onFijo: (id: string) => void;
+function OrderRow({ o, open, onToggle, onClose, onDeliver, onRemove, onFijo }: {
+  o: Order; open: boolean; onToggle: () => void; onClose: () => void; onDeliver?: () => void; onRemove: () => void; onFijo: (id: string) => void;
 }) {
+  const pedido = kindOf(o) === 'pedido';
   const toast = useToast();
   const due = orderDue(o);
   return (
@@ -195,7 +198,10 @@ function OrderRow({ o, open, onToggle, onClose, onDeliver, onFijo }: {
             {o.pay === 'pending' && o.paidAmount ? <small className="warn">debe {colones(due)}</small> : o.discount ? <small>−{colones(o.discount)}</small> : null}
           </span>
         </button>
-        {onDeliver && <button className="deliver" onClick={onDeliver} title="Marcar entregado" aria-label={`Entregado: ${o.client}`}>✓</button>}
+        {onDeliver && <button className="row-act deliver" onClick={onDeliver} title="Entregado" aria-label={`Entregado: ${o.client}`}><Icon name="check" size={18} /></button>}
+        <button className="row-act remove" onClick={onRemove} title={pedido ? 'No se hizo (se quita)' : 'Borrar'} aria-label={`${pedido ? 'No se hizo' : 'Borrar'}: ${o.client}`}>
+          <Icon name={pedido ? 'saltar' : 'basura'} size={17} />
+        </button>
       </div>
       {open && (
         <OrderForm

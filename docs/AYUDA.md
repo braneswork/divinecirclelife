@@ -38,10 +38,15 @@ Ventas tiene tres listas. Lo que anotas cae en la lista de la pestaña donde lo 
 - **Fijos**: los pedidos que se repiten cada semana (Mantarraya…). Cada semana crean sus pedidos solos.
 - En **Ventas**, si ese día tenía pedidos sin entregar, salen debajo para entregarlos ahí mismo.
 
-**Cada fila**: la marca de pago (tócala para cambiarla), quién, qué y cuánto. Toca la fila y se abre ahí mismo su ficha, ya editable:
-- arriba, **Pedido / Vendido** y el **total**, que puedes escribir directo (vuelve al calculado con *calcular*);
-- cantidades, + agregar producto, cliente, día, si se repite, descuento, pago (✓ ✕ +), abono y nota;
-- **Guardar**, **Borrar** (se puede deshacer) y, en un pedido, **No se hizo** (lo quita sin borrarlo).
+**Cada fila** tiene todo a mano, sin abrirla:
+- la marca de pago (tócala para cambiarla ✓ ✕ +), quién, qué y cuánto;
+- en un pedido: **✓** entregado (pasa a Ventas) y **⊘** no se hizo (se quita; si era de un fijo, ese día queda saltado y no vuelve);
+- en una venta: el **basurero** la borra.
+- Todo se puede deshacer desde el aviso de abajo.
+
+Toca la fila para abrir su ficha, corta: **Pedido / Vendido**, el **total** (escríbelo directo; *calcular* lo devuelve), cantidades y pago. **+ producto** agrega otro; el botón del día (**hoy ▾**) abre lo demás: día, si se repite, descuento, abono, nota y cliente.
+
+**Si le llevaste otra cosa**: anota la venta como fue (ej. `2C 1BAG Jesús`). Si esa persona tenía un pedido sin entregar de ese día o de los 3 anteriores, la ficha muestra **Reemplaza su pedido de…** ya marcado: al guardar, ese pedido se quita (y si era de un fijo, ese día queda saltado). Desmárcalo si es una venta aparte.
 - Una fecha futura siempre es pedido.
 - **M** en una venta: el cliente paga mensual; **F**: ya está en una factura.
 

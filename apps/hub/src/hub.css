@@ -440,11 +440,15 @@ code { font-size: .85em; word-break: break-all; }
 .pay-sum .paid { color: var(--ok); } .pay-sum .pending { color: var(--bad); } .pay-sum .credit { color: var(--accent); }
 .order-row .prog-text strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .prog-text { flex: 1 1 auto; }
-.deliver {
-  flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--ok); background: none; color: var(--ok);
-  font-weight: 800; font-size: 15px; cursor: pointer;
+.row-act {
+  flex: 0 0 auto; width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid var(--line); background: none; color: var(--muted);
+  display: grid; place-items: center; cursor: pointer; padding: 0;
 }
-.deliver:hover { background: var(--ok); color: var(--bg); }
+.row-act.deliver { border-color: var(--ok); color: var(--ok); }
+.row-act.deliver:hover { background: var(--ok); color: var(--bg); }
+.row-act.remove { border-color: transparent; opacity: .7; }
+.row-act.remove:hover { color: var(--bad); opacity: 1; }
+.prog-row { gap: 8px; }
 .order-row.open { background: color-mix(in srgb, var(--card) 85%, transparent); border-radius: 16px; box-shadow: 0 0 0 1.5px var(--accent); margin: 4px 0; }
 .order-row.open + li { border-top-color: transparent; }
 .order-form.inline { padding: 4px 10px 14px; }
@@ -471,3 +475,34 @@ code { font-size: .85em; word-break: break-all; }
 .pay-pick .chip.pay-pending.on { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 14%, var(--card)); }
 .chip.danger { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 50%, var(--line)); }
 .order-form .pay-row { flex-direction: column; align-items: flex-start; gap: 6px; }
+
+/* ficha compacta */
+.order-form { gap: 10px; }
+.order-form.inline { gap: 8px; }
+.kind-pick button { padding: 6px 14px; }
+.total-edit input { font-size: 22px; }
+.total-edit small { text-transform: none; letter-spacing: 0; font-weight: 600; }
+.order-form .checkout-lines { gap: 2px; }
+.order-form .pay-pick .chip { font-size: 12.5px; }
+.order-form .checkout-foot { padding-top: 8px; flex-wrap: wrap; }
+.order-form .chip.more { color: var(--muted); font-weight: 600; }
+.order-form .row.two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.warn-text { color: var(--bad); font-weight: 700; }
+.replace {
+  display: flex; align-items: center; gap: 10px; text-align: left; font: inherit; font-size: 13px; color: var(--fg); cursor: pointer;
+  border: 1.5px dashed var(--gold); background: color-mix(in srgb, var(--gold) 10%, transparent); border-radius: 14px; padding: 8px 12px;
+}
+.replace .box { flex: 0 0 auto; width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid var(--gold); display: grid; place-items: center; font-weight: 800; color: var(--bg); }
+.replace.on .box { background: var(--gold); }
+.prog-day { padding: 8px 10px 6px; gap: 4px; }
+.prog-head .prep.mini { flex: 1 1 auto; justify-content: flex-start; gap: 4px; }
+.prep.mini .prep-dot { width: 28px; height: 28px; font-size: 8.5px; box-shadow: none; border-width: 1.5px; }
+.prep.mini .prep-dot b { font-size: 11px; }
+.programa { gap: 10px; }
+.order-top { flex-wrap: nowrap; }
+.total-edit input { width: 6.2em; }
+.order-form .checkout-foot { flex-wrap: nowrap; }
+.order-form .checkout-foot .row { flex-wrap: nowrap; min-width: 0; overflow: hidden; }
+.order-form .checkout-foot .chip.more { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.order-form .shop-go { flex: 0 0 auto; padding-left: 18px; padding-right: 18px; }
+.order-row.open .prog-side { display: none; }

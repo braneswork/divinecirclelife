@@ -2,6 +2,7 @@
    Balance al centro, ventas por familia como anillo y alrededor cada cuenta:
    ventas, ✓ cobrado, ✕ por cobrar, + crédito, salidas y facturas abiertas. */
 
+import { useIsAdmin } from '../role';
 import { useMemo, useState } from 'react';
 import { useNav } from '../nav';
 import { colones, monthOf, monthRange, orderTotal, summarize } from '@dc/core';
@@ -15,6 +16,7 @@ const HEX = hexCells(7);
 type Key = 'ventas' | 'cobrado' | 'porCobrar' | 'credito' | 'salidas' | 'facturas';
 
 export function Caja() {
+  const admin = useIsAdmin();
   const s = useStore(x => x);
   const toast = useToast();
   const [period, setPeriod] = useState(monthOf(today()));
@@ -56,7 +58,7 @@ export function Caja() {
           })),
           ...monthExpenses.map((e): TimelineItem => ({
             id: e.id, date: e.date, tone: 'var(--bad)', title: `Salida · ${e.type}`, detail: e.note, amount: -e.amount,
-            onClick: () => { if (confirm(`¿Borrar la salida de ${colones(e.amount)} (${e.type})?`)) { removeExpense(e.id); toast('Salida borrada', { label: 'Deshacer', run: () => upsertExpense(e) }); } },
+            onClick: () => { if (admin && confirm(`¿Borrar la salida de ${colones(e.amount)} (${e.type})?`)) { removeExpense(e.id); toast('Salida borrada', { label: 'Deshacer', run: () => upsertExpense(e) }); } },
           })),
         ]} />
       ) : (
@@ -92,7 +94,7 @@ export function Caja() {
                 <ul className="mini-list">
                   {monthExpenses.slice(0, 5).map(e => (
                     <li key={e.id}><span>{e.type}{e.note ? ` · ${e.note}` : ''}</span><b>{colones(e.amount)}</b>
-                      <button className="link" onClick={() => { removeExpense(e.id); toast('Salida borrada', { label: 'Deshacer', run: () => upsertExpense(e) }); }} aria-label="Borrar salida">×</button></li>
+                      {admin && <button className="link" onClick={() => { removeExpense(e.id); toast('Salida borrada', { label: 'Deshacer', run: () => upsertExpense(e) }); }} aria-label="Borrar salida">×</button>}</li>
                   ))}
                 </ul>
               ) : <span className="small">sin salidas</span>)}

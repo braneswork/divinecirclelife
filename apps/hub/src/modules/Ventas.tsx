@@ -5,6 +5,7 @@
    Cada fila se abre ahí mismo en su ficha editable. Lo que se anota cae en la
    lista de la pestaña donde se escribe (una fecha futura siempre es pedido). */
 
+import { useIsAdmin } from '../role';
 import { useMemo, useRef, useState } from 'react';
 import {
   PAY, QUICK_ERRORS, addDays, bakeSummary, colones, dayLabel, fromISODate, matchClient, orderDue, orderTotal, parseQuick, payTotals, priceOn,
@@ -182,6 +183,8 @@ function OrderRow({ o, open, onToggle, onClose, onDeliver, onRemove, onFijo }: {
   o: Order; open: boolean; onToggle: () => void; onClose: () => void; onDeliver?: () => void; onRemove: () => void; onFijo: (id: string) => void;
 }) {
   const pedido = kindOf(o) === 'pedido';
+  // el equipo no borra lo cobrado ni lo facturado (lo hace dueño o admin)
+  const canRemove = useIsAdmin() || (o.pay !== 'paid' && !o.invoiceId);
   const toast = useToast();
   const due = orderDue(o);
   return (
@@ -199,9 +202,9 @@ function OrderRow({ o, open, onToggle, onClose, onDeliver, onRemove, onFijo }: {
           </span>
         </button>
         {onDeliver && <button className="row-act deliver" onClick={onDeliver} title="Entregado" aria-label={`Entregado: ${o.client}`}><Icon name="check" size={18} /></button>}
-        <button className="row-act remove" onClick={onRemove} title={pedido ? 'No se hizo (se quita)' : 'Borrar'} aria-label={`${pedido ? 'No se hizo' : 'Borrar'}: ${o.client}`}>
+        {canRemove && <button className="row-act remove" onClick={onRemove} title={pedido ? 'No se hizo (se quita)' : 'Borrar'} aria-label={`${pedido ? 'No se hizo' : 'Borrar'}: ${o.client}`}>
           <Icon name={pedido ? 'saltar' : 'basura'} size={17} />
-        </button>
+        </button>}
       </div>
       {open && (
         <OrderForm

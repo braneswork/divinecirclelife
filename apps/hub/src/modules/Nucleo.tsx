@@ -2,6 +2,7 @@
    por lo que generaron en el mes (las que más venden, más cerca del centro).
    Tocar una la expande: su ficha con lo que ha generado y su descripción. */
 
+import { useIsAdmin } from '../role';
 import { useRef, useState, type CSSProperties } from 'react';
 import {
   ALL_PILLARS, CATEGORIES, colones, monthOf, monthRange, offeringStats, pillarOf,
@@ -25,6 +26,7 @@ function Nucleo({ kind, title }: { kind: OfferingKind; title: string }) {
   const wrap = useRef<HTMLDivElement>(null);
   const [inside, setInside] = useState<{ id: string; from?: Origin; closing?: boolean } | null>(null);
   const [creating, setCreating] = useState(false);
+  const admin = useIsAdmin();
   const period = monthOf(today());
   const { from, to } = monthRange(period);
   const stats = offeringStats(orders, from, to);
@@ -60,7 +62,7 @@ function Nucleo({ kind, title }: { kind: OfferingKind; title: string }) {
             </Bubble>
           );
         })}
-        <Bubble at={cells[list.length + 1].at} d={cells[list.length + 1].d} className="add" onClick={() => setCreating(true)} label={`Nuevo en ${title}`}><span>+</span></Bubble>
+        {admin && <Bubble at={cells[list.length + 1].at} d={cells[list.length + 1].d} className="add" onClick={() => setCreating(true)} label={`Nuevo en ${title}`}><span>+</span></Bubble>}
       </Stage>
 
       {creating && <OfferingSheet kind={kind} onClose={() => setCreating(false)} />}
@@ -83,6 +85,7 @@ function OfferingPage({ id, onBack }: { id: string; onBack: () => void }) {
   const projects = useStore(s => s.projects);
   const [period, setPeriod] = useState(monthOf(today()));
   const [editing, setEditing] = useState(false);
+  const admin = useIsAdmin();
   const { from, to } = monthRange(period);
   const st = offeringStats(orders, from, to).get(id);
   const pillar = pillarOf(o.pillar);
@@ -111,7 +114,7 @@ function OfferingPage({ id, onBack }: { id: string; onBack: () => void }) {
 
       <Stage>
         <Track r={39} dashed />
-        <Bubble d={44} className="photo-bubble hero" style={{ '--tone': pillar?.color } as CSSProperties} onClick={() => setEditing(true)} label="Editar ficha">
+        <Bubble d={44} className="photo-bubble hero" style={{ '--tone': pillar?.color } as CSSProperties} onClick={admin ? () => setEditing(true) : undefined} label={admin ? 'Editar ficha' : o.name}>
           <Photo src={o.image} name={o.name} tone={pillar?.color} />
         </Bubble>
         {facts.map((f, i) => (
@@ -126,7 +129,7 @@ function OfferingPage({ id, onBack }: { id: string; onBack: () => void }) {
         <h2>{o.name} <small>{o.code}</small></h2>
         <p className="muted">{[o.unit, o.kind === 'producto' ? o.category : 'experiencia', projects.find(p => p.id === o.projectId)?.name].filter(Boolean).join(' · ')}{o.public ? ' · en la web' : ''}{o.active ? '' : ' · inactivo'}</p>
         <p>{o.description || <span className="muted">Sin descripción todavía.</span>}</p>
-        <button className="btn-inline" onClick={() => setEditing(true)}>Editar ficha</button>
+        {admin && <button className="btn-inline" onClick={() => setEditing(true)}>Editar ficha</button>}
       </div>
 
       {editing && <OfferingSheet kind={o.kind} offering={o} onClose={() => setEditing(false)} />}

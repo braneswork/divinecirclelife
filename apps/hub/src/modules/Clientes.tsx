@@ -2,6 +2,7 @@
    en su círculo: descuentos negociados por producto, pedidos del mes y
    facturas mensuales (como las hojas Payments y Facturas). */
 
+import { useIsAdmin } from '../role';
 import { useRef, useState } from 'react';
 import {
   INVOICE_SEQ_START, MESES, buildInvoice, pillarOf, colones, invoiceLines, invoiceTotals, invoiceableOrders, monthOf, orderDue, orderTotal,
@@ -110,6 +111,7 @@ function ClientPage(props: { id: string; onBack: () => void }) {
 }
 
 function ClientPageInner({ id, onBack }: { id: string; onBack: () => void }) {
+  const admin = useIsAdmin();
   const client = useStore(s => s.clients.find(c => c.id === id))!;
   const offerings = useStore(s => s.offerings);
   const orders = useStore(s => s.orders);
@@ -203,7 +205,7 @@ function ClientPageInner({ id, onBack }: { id: string; onBack: () => void }) {
       {pendingInv.length > 0 ? (
         <div className="invoice-cta">
           <span>{pendingInv.length} pedidos sin facturar · {colones(previewSub)} → <b>{colones(previewTotal)}</b></span>
-          <button className="btn-inline" onClick={issue}><Icon name="factura" size={16} /> Emitir factura</button>
+          {admin && <button className="btn-inline" onClick={issue}><Icon name="factura" size={16} /> Emitir factura</button>}
           <HelpDot topic="factura" label="Factura mensual" />
         </div>
       ) : (
@@ -281,12 +283,12 @@ function ClientPageInner({ id, onBack }: { id: string; onBack: () => void }) {
             { label: 'guardar', onClick: () => { upsertClient(edit); setEdit(null); }, tone: 'on' },
             { label: edit.billing, onClick: () => setEdit({ ...edit, billing: edit.billing === 'mensual' ? 'contado' : 'mensual' }), title: 'Forma de cobro' },
             { label: edit.active ? 'archivar' : 'reactivar', onClick: () => { upsertClient({ ...edit, active: !edit.active }); setEdit(null); toast(edit.active ? `${edit.name} archivado` : `${edit.name} reactivado`); if (edit.active) onBack(); } },
-            { label: 'borrar', tone: 'bad', onClick: () => {
+            ...(admin ? [{ label: 'borrar', tone: 'bad' as const, onClick: () => {
               if (!confirm(`¿Borrar a ${edit.name}? Sus ventas se quedan con el nombre.`)) return;
               if (removeClient(client) === 'tiene-facturas') { toast('Tiene facturas emitidas: se archiva en vez de borrarse'); upsertClient({ ...client, active: false }); }
               else toast(`${client.name} borrado`);
               setEdit(null); onBack();
-            } },
+            } }] : []),
           ]}
         />
       )}

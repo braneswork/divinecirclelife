@@ -2,13 +2,21 @@
    lo de la nube gana para los mismos ids, y lo que solo existe en el
    dispositivo (creado sin señal o antes de conectar Supabase) se sube. */
 
-import { dropDuplicates, ensureRecurring, getState, replaceState, type State } from './store';
+import { clearLocal, dropDuplicates, ensureRecurring, getState, replaceState, type State } from './store';
+import { sb } from './supabase';
 import { TABLES, claimRole, pullAll, upsertMany } from './sync';
 
 const FIRST = 'dc-synced-once';
 
 export async function syncNow(): Promise<boolean> {
   const role = await claimRole();
+  if (role === 'sin acceso') {
+    // ya no es del equipo: se borra lo de este dispositivo y se cierra la sesión
+    clearLocal();
+    await sb?.auth.signOut();
+    location.reload();
+    return false;
+  }
   if (role !== 'owner' && role !== 'admin' && role !== 'staff') return false;
   const remote = await pullAll();
   if (!remote) return false;

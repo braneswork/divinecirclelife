@@ -5,6 +5,7 @@
    - Con sesión pero fuera del equipo: "sin acceso".
    - Sin señal: si este dispositivo ya tenía sesión y rol, se puede seguir trabajando. */
 
+import { clearLocal } from '../store';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import logo from '@dc/brand/assets/logo-light.png';
@@ -36,6 +37,8 @@ export function Gate({ children }: { children: ReactNode }) {
       const role = await claimRole();
       if (ok(role)) { cacheRole(s.user.id, role); return setPhase('dentro'); }
       if (role === 'error' && ok(cachedRole(s.user.id) ?? '')) return setPhase('dentro'); // sin señal
+      // fuera del equipo (o lo quitaron): no se deja nada del negocio en este dispositivo
+      if (role === 'sin acceso') clearLocal();
       setPhase(role === 'error' ? 'fuera' : 'sin-acceso');
     };
     sb.auth.getSession().then(({ data }) => decide(data.session));

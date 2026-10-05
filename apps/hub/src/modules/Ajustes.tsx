@@ -19,7 +19,7 @@ export function Ajustes() {
   const [theme, setThemeState] = useState<Theme>(getTheme);
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState('');
-  const [panel, setPanel] = useState<'cuenta' | 'equipo' | 'clave' | null>(null);
+  const [panel, setPanel] = useState<'cuenta' | 'equipo' | 'clave' | 'actividad' | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -55,9 +55,12 @@ export function Ajustes() {
     { key: 'light', label: 'claro', on: theme === 'light', run: () => pickTheme('light') },
     { key: 'dark', label: 'oscuro', on: theme === 'dark', run: () => pickTheme('dark') },
     { key: 'cuenta', label: 'cuenta', on: false, run: () => setPanel('cuenta') },
-    ...(isAdmin ? [{ key: 'equipo', label: 'equipo', on: false, run: () => setPanel('equipo') }] : []),
-    { key: 'down', label: 'descargar respaldo', on: false, run: exportJson },
-    { key: 'up', label: 'cargar respaldo', on: false, run: () => fileRef.current?.click() },
+    ...(isAdmin ? [
+      { key: 'equipo', label: 'equipo', on: false, run: () => setPanel('equipo') },
+      { key: 'actividad', label: 'actividad', on: false, run: () => setPanel('actividad') },
+      { key: 'down', label: 'descargar respaldo', on: false, run: exportJson },
+      { key: 'up', label: 'cargar respaldo', on: false, run: () => fileRef.current?.click() },
+    ] : []),
   ];
 
   return (
@@ -98,6 +101,7 @@ export function Ajustes() {
       )}
       {panel === 'clave' && <PasswordSheet onClose={() => setPanel(null)} />}
       {panel === 'equipo' && <Team myRole={role} me={session?.user.id} onClose={() => setPanel(null)} />}
+      {panel === 'actividad' && <Activity onClose={() => setPanel(null)} />}
     </>
   );
 }
@@ -187,6 +191,73 @@ function PasswordSheet({ onClose }: { onClose: () => void }) {
         <p className={'field wide ' + (strong ? 'ok-text' : 'muted')}>Mínimo 10 caracteres, con letras y números.</p>
         <div className="field wide row end"><button type="button" className="btn-inline ghost" onClick={onClose}>Cancelar</button><button className="btn-inline">Guardar</button></div>
       </form>
+    </Sheet>
+  );
+}
+
+interface AuditRow { id: number; at: string; email: string | null; tbl: string; action: 'insert' | 'update' | 'delete'; old: Record<string, unknown> | null; new: Record<string, unknown> | null }
+
+const TBL: Record<string, string> = { orders: 'venta', clients: 'cliente', offerings: 'producto', expenses: 'salida', invoices: 'factura', recurring: 'fijo', members: 'equipo', projects: 'proyecto' };
+const VERB = { insert: 'anotó', update: 'cambió', delete: 'borró' };
+const FIELD: Record<string, string> = {
+  pay: 'pago', status: 'estado', items: 'productos', date: 'día', client: 'cliente', note: 'nota', amount_override: 'total', discount: 'descuento',
+  paid_amount: 'abono', price: 'precio', promo_price: 'precio especial', promo_until: 'fin del especial', name: 'nombre', amount: 'monto',
+  discounts: 'descuentos', billing: 'cobro', active: 'activo', role: 'rol', weekdays: 'días', skips: 'días saltados', invoice_id: 'factura',
+};
+const money = (v: unknown) => (typeof v === 'number' ? '₡' + v.toLocaleString('es-CR') : '');
+
+/** Qué fila fue, en palabras: "Jesús · 2 Campesino ₡8.000" */
+function what(r: AuditRow) {
+  const x = (r.new ?? r.old ?? {}) as Record<string, unknown>;
+  if (r.tbl === 'orders') {
+    const items = (x.items as { qty: number; code: string }[] | undefined)?.map(i => `${i.qty}${i.code}`).join(' ') ?? '';
+    return `${x.client ?? ''} · ${items} · ${x.date ?? ''}`;
+  }
+  if (r.tbl === 'expenses') return `${x.type ?? ''} ${money(x.amount)}`;
+  if (r.tbl === 'invoices') return `${x.number ?? ''} · ${x.client ?? ''}`;
+  if (r.tbl === 'members') return `${x.name ?? ''} (${x.role ?? ''})`;
+  return String(x.client ?? x.name ?? '');
+}
+
+function changes(r: AuditRow) {
+  if (r.action !== 'update' || !r.old || !r.new) return '';
+  const keys = Object.keys(r.new).filter(k => k !== 'updated_at' && JSON.stringify(r.new![k]) !== JSON.stringify(r.old![k]));
+  const show = (k: string, v: unknown) => (k === 'pay' ? ({ paid: '✓', pending: '✕', credit: '+' } as Record<string, string>)[String(v)] ?? '' : k === 'status' ? String(v) : typeof v === 'number' ? money(v) : '');
+  return keys.map(k => { const a = show(k, r.old![k]), b = show(k, r.new![k]); return (FIELD[k] ?? k) + (a || b ? ` ${a || '–'}→${b || '–'}` : ''); }).join(', ');
+}
+
+/** Registro de actividad: quién anotó, cambió o borró qué (solo dueño y admin). */
+function Activity({ onClose }: { onClose: () => void }) {
+  const [rows, setRows] = useState<AuditRow[] | null>(null);
+  const [error, setError] = useState('');
+  const [who, setWho] = useState('');
+  useEffect(() => {
+    void sb?.from('audit').select('*').order('at', { ascending: false }).limit(300)
+      .then(({ data, error: e }) => { if (e) setError(e.message.includes('audit') ? 'Falta correr supabase/equipo.sql en Supabase.' : e.message); else setRows(data as AuditRow[]); });
+  }, []);
+  const people = [...new Set((rows ?? []).map(r => r.email ?? '—'))];
+  const shown = (rows ?? []).filter(r => !who || (r.email ?? '—') === who);
+  return (
+    <Sheet onClose={onClose} label="Actividad" className="activity-sheet">
+      <h2>Actividad</h2>
+      <p className="muted small">Quién anotó, cambió o borró qué. Solo lo ven dueño y admin; nadie lo puede editar.</p>
+      {people.length > 1 && (
+        <div className="row">
+          <button className={'chip' + (!who ? ' on' : '')} onClick={() => setWho('')}>todos</button>
+          {people.map(p => <button key={p} className={'chip' + (who === p ? ' on' : '')} onClick={() => setWho(p)}>{p.split('@')[0]}</button>)}
+        </div>
+      )}
+      {error ? <p className="gate-msg">{error}</p> : !rows ? <p className="muted">Cargando…</p> : (
+        <ul className="activity">
+          {shown.map(r => (
+            <li key={r.id} className={r.action}>
+              <time>{new Date(r.at).toLocaleString('es-CR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</time>
+              <span><b>{(r.email ?? 'sistema').split('@')[0]}</b> {VERB[r.action]} {TBL[r.tbl] ?? r.tbl}: {what(r)}{changes(r) && <small> · {changes(r)}</small>}</span>
+            </li>
+          ))}
+          {!shown.length && <li className="muted">Sin actividad todavía.</li>}
+        </ul>
+      )}
     </Sheet>
   );
 }

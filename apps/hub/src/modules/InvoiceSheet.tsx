@@ -1,6 +1,7 @@
 /* La factura mensual como documento (hoja "Facturas"): se puede imprimir o
    guardar como PDF, marcar pagada, sumar ajustes (préstamo, abono) o anular. */
 
+import { useIsAdmin } from '../role';
 import { useState } from 'react';
 import { colones, invoiceTotals } from '@dc/core';
 import { PayMark, Sheet, useToast } from '@dc/ui';
@@ -10,6 +11,7 @@ import { monthName } from './Clientes';
 import { HelpDot } from '../HelpDot';
 
 export function InvoiceSheet({ id, onClose }: { id: string; onClose: () => void }) {
+  const admin = useIsAdmin();
   const inv = useStore(s => s.invoices.find(i => i.id === id));
   const client = useStore(s => s.clients.find(c => c.id === inv?.clientId));
   const toast = useToast();
@@ -65,15 +67,15 @@ export function InvoiceSheet({ id, onClose }: { id: string; onClose: () => void 
           <span>{inv.status === 'pagada' ? 'Pagada' : 'Pendiente de pago'}</span>
         </footer>
 
-        <form className="adj-form no-print" onSubmit={addAdjustment}>
+        {admin && <form className="adj-form no-print" onSubmit={addAdjustment}>
           <input value={adj.label} onChange={e => setAdj({ ...adj, label: e.target.value })} placeholder="Ajuste: préstamo 2025, abono…" aria-label="Concepto del ajuste" />
           <input value={adj.amount} onChange={e => setAdj({ ...adj, amount: e.target.value })} placeholder="-45000" inputMode="numeric" aria-label="Monto del ajuste" />
           <button className="btn-inline">+</button>
-        </form>
+        </form>}
         <div className="sheet-actions no-print">
-          <button className="btn-inline" onClick={() => setInvoicePaid(inv, inv.status !== 'pagada')}>{inv.status === 'pagada' ? 'Reabrir' : 'Marcar pagada'}</button>
+          {admin && <button className="btn-inline" onClick={() => setInvoicePaid(inv, inv.status !== 'pagada')}>{inv.status === 'pagada' ? 'Reabrir' : 'Marcar pagada'}</button>}
           <button className="btn-inline ghost" onClick={() => print()}>Imprimir / PDF</button>
-          <button className="btn-inline ghost bad" onClick={() => { if (confirm(`¿Anular la factura ${inv.number}? Sus pedidos vuelven a quedar por facturar.`)) { removeInvoice(inv); onClose(); } }}>Anular</button>
+          {admin && <button className="btn-inline ghost bad" onClick={() => { if (confirm(`¿Anular la factura ${inv.number}? Sus pedidos vuelven a quedar por facturar.`)) { removeInvoice(inv); onClose(); } }}>Anular</button>}
           <button className="btn-inline ghost" onClick={onClose}>Cerrar</button>
           <HelpDot topic="factura" label="Factura mensual" />
         </div>

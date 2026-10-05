@@ -1,6 +1,7 @@
 /* Pedidos fijos (semanales): la semana de lunes a domingo, lo que hay que
    preparar cada día y cada fijo para editarlo, pausarlo o borrarlo. */
 
+import { useIsAdmin } from '../role';
 import { useMemo, useState, type CSSProperties } from 'react';
 import {
   WEEKDAY_SHORT, WEEK_ORDER, colones, matchClient, perWeek, pillarOf, recurringLines, recurringValue, PAY,
@@ -91,6 +92,7 @@ export function Fijos() {
 }
 
 export function FijoSheet({ r, isNew, onClose }: { r: Recurring; isNew: boolean; onClose: () => void }) {
+  const admin = useIsAdmin();
   const offerings = useStore(s => s.offerings);
   const clients = useStore(s => s.clients);
   const toast = useToast();
@@ -163,7 +165,7 @@ export function FijoSheet({ r, isNew, onClose }: { r: Recurring; isNew: boolean;
           <button className="btn-inline ghost" onClick={() => { saveRecurring({ ...d, active: !d.active }); toast(d.active ? 'Fijo en pausa: se quitaron sus ventas futuras sin tocar' : 'Fijo reactivado'); onClose(); }}>
             {d.active ? 'Pausar' : 'Reactivar'}
           </button>
-          <button className="btn-inline ghost bad" onClick={() => { if (confirm(`¿Borrar el fijo de ${d.client}? Sus ventas pasadas se quedan.`)) { removeRecurring(r); toast('Fijo borrado'); onClose(); } }}>Borrar fijo</button>
+          {admin && <button className="btn-inline ghost bad" onClick={() => { if (confirm(`¿Borrar el fijo de ${d.client}? Sus ventas pasadas se quedan.`)) { removeRecurring(r); toast('Fijo borrado'); onClose(); } }}>Borrar fijo</button>}
         </div>
       )}
     </Sheet>

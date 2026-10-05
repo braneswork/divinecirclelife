@@ -1,6 +1,7 @@
 /* El círculo: Divine Circle al centro, aliados en el anillo cercano,
    vecinos en el exterior. */
 
+import { useIsAdmin } from '../role';
 import { useState } from 'react';
 import type { Project, Ring } from '@dc/core';
 import { Bubble, Focus, Stage, Track, around } from '@dc/ui';
@@ -16,6 +17,7 @@ export function Circulo() {
   const projects = useStore(s => s.projects);
   const toast = useToast();
   const [draft, setDraft] = useState<Project | null>(null);
+  const admin = useIsAdmin();
   const [isNew, setIsNew] = useState(false);
 
   const allies = projects.filter(p => p.ring === 'aliado');
@@ -23,6 +25,7 @@ export function Circulo() {
   const core = projects.find(p => p.ring === 'nucleo');
 
   function open(p: Project | null) {
+    if (!admin) return;
     setIsNew(!p);
     setDraft(p ? { ...p } : { id: '', slug: '', name: '', ring: 'vecino', branes: false, active: true });
   }
@@ -58,7 +61,7 @@ export function Circulo() {
         </Bubble>
         {allies.map((p, i) => node(p, around(i, allies.length, 27, 60), 15))}
         {neighbors.map((p, i) => node(p, around(i, neighbors.length + 1, 43, 15), 12))}
-        <Bubble at={around(neighbors.length, neighbors.length + 1, 43, 15)} d={12} className="add" onClick={() => open(null)} label="Sumar un proyecto"><span>+</span></Bubble>
+        {admin && <Bubble at={around(neighbors.length, neighbors.length + 1, 43, 15)} d={12} className="add" onClick={() => open(null)} label="Sumar un proyecto"><span>+</span></Bubble>}
       </Stage>
 
       {draft && (

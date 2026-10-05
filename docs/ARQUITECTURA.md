@@ -105,20 +105,31 @@ Proyecto de Supabase: `vbeubyipzzpfbdjswavh` (URL y clave anon pública en
   funciones (`team`, `set_member`, `remove_member`) que exigen dueño o admin y dejan siempre un
   dueño; nadie puede insertarse en `members` directamente. `supabase/seguridad.sql` además
   bloquea las tablas del hub anterior para el público.
+- **Roles** (`supabase/equipo.sql`): dueño/admin todo; equipo (staff) anota y edita ventas,
+  pedidos, clientes y fijos, anota salidas, y no cambia catálogo, precios, proyectos ni facturas;
+  solo borra ventas sin cobrar ni facturar y salidas de hace menos de 15 min. El hub oculta esos
+  botones (`apps/hub/src/role.ts`), pero la regla vive en RLS.
+- **Actividad** (`audit`): un trigger registra cada alta, cambio y baja (quién, cuándo, antes y
+  después, sin fotos). Solo dueño/admin lo leen; nadie lo escribe desde la app.
+- **Quitar a alguien** del equipo: al abrir el hub, `claim_ownership` responde "sin acceso" y se
+  borran los datos locales y la sesión de ese dispositivo.
+- **Pedidos web**: hasta 60 días adelante, 30 por hora en total y 5 por día por teléfono.
 - **Cabeceras** (`vercel.json`): Content-Security-Policy estricta (scripts propios, conexión solo
   al proyecto de Supabase, sin iframes), HSTS, nosniff, X-Frame-Options DENY, Referrer-Policy,
   Permissions-Policy, COOP.
 
 ### Configuración en Supabase (una vez)
-1. SQL Editor: `supabase/setup.sql`, `supabase/seguridad.sql`, `supabase/fijos.sql` y `supabase/precios.sql`, en ese orden.
+1. SQL Editor: `supabase/setup.sql`, `supabase/seguridad.sql`, `supabase/fijos.sql`, `supabase/precios.sql` y `supabase/equipo.sql`, en ese orden (cada uno se puede volver a correr).
 2. (Opcional, requiere SMTP propio: Authentication → Emails → Set up SMTP, p. ej. Resend)
    Plantilla **Magic link or OTP** con el código `{{ .Token }}` y el enlace `{{ .ConfirmationURL }}`.
    Sin SMTP propio se usa el enlace (el correo de Supabase tiene un límite bajo de envíos por hora).
-3. Authentication → URL Configuration: Site URL = dirección de Vercel; Redirect URLs = esa
-   dirección con `/**` y `https://*.vercel.app/**`.
+3. Authentication → URL Configuration: Site URL = `https://divinecircle.vercel.app`; Redirect URLs =
+   solo `https://divinecircle.vercel.app/**` (no `https://*.vercel.app/**`: cualquier sitio en Vercel
+   podría recibir un enlace de acceso).
 4. Entrar al hub con el enlace (quedas como dueño) y crear la contraseña en Ajustes → Cuenta. Después, Authentication → Sign In / Providers → desactivar
-   **Allow new users to sign up**: desde ahí solo entran personas invitadas (Users → Invite user)
+   **Allow new users to sign up**: desde ahí solo entran personas creadas en Users → Add user
    y agregadas en Ajustes → Equipo.
+5. Authentication → Providers → Email: contraseña mínima de 10 caracteres con letras y números.
 
 ## Publicación (Vercel)
 

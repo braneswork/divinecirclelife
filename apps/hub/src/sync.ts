@@ -1,6 +1,7 @@
 /* Puente con Supabase. Mapea camelCase (app) ↔ snake_case (base de datos).
    Si no hay Supabase o no hay sesión, no hace nada y todo queda en el dispositivo. */
 
+import { setRole } from './role';
 import type { Client, Expense, Invoice, Offering, Order, Project, Recurring } from '@dc/core';
 import { sb } from './supabase';
 
@@ -66,6 +67,7 @@ export async function claimRole(): Promise<string> {
   if (!(await signedIn())) return 'sin sesión';
   const { data, error } = await sb!.rpc('claim_ownership');
   if (error) { report(error); return 'error'; }
+  setRole(data as string);
   return data as string;
 }
 

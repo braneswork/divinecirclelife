@@ -133,9 +133,24 @@ Lo escrito llena la ficha de la venta; ahí se puede cambiar todo antes de guard
 ### Ajustes {#ajustes}
 - Tema automático, claro u oscuro.
 - **Cuenta**: tu correo y rol, sincronizar ahora y **salir**. Salir sube lo pendiente y borra los datos de este dispositivo (útil en equipos compartidos).
-- Respaldo: descargar o cargar todos los datos en un archivo.
+- **Respaldo** (dueño y admin): descargar todos los datos en un archivo, o cargarlo. Conviene descargarlo cada semana.
+- **Actividad** (dueño y admin): quién anotó, cambió o borró qué y cuándo, con filtro por persona. Nadie lo puede editar ni borrar.
 
 ### Equipo {#equipo}
-- Solo dueño y admin lo ven. Roles: **dueño** (todo, incluido nombrar otros dueños), **admin** (todo, y agrega o quita equipo), **equipo** (trabaja en el hub, sin gestionar personas).
-- Para agregar a alguien: invítalo en Supabase → Authentication → Users → **Invite user** con su correo; luego aquí escribe el correo, elige el rol y **Agregar**.
-- Siempre queda al menos un dueño.
+Solo dueño y admin lo ven.
+
+| | Dueño / admin | Equipo |
+|---|---|---|
+| Ventas, pedidos, pagos, abonos, descuentos | ✓ | ✓ |
+| Borrar una venta | ✓ | solo si no está cobrada ni facturada |
+| Clientes: agregar y editar | ✓ | ✓ (no borrar) |
+| Fijos: crear, cambiar, pausar | ✓ | ✓ (no borrar) |
+| Anotar salidas | ✓ | ✓ (borrar solo en los 15 min siguientes) |
+| Catálogo, precios, precio especial, proyectos | ✓ | solo ver |
+| Facturas: emitir, marcar pagada, anular | ✓ | solo ver |
+| Respaldo, actividad, equipo | ✓ | — |
+
+- **Dueño**: además nombra otros dueños. **Admin**: agrega o quita equipo. Siempre queda al menos un dueño.
+- **Agregar a alguien**: en Supabase → Authentication → Users → **Add user → Create new user**: su correo y una contraseña temporal, con *Auto Confirm User*. Luego aquí, en Equipo: su correo, el rol y **Agregar**. Pásale la contraseña en persona; la cambia en Ajustes → Cuenta → contraseña.
+- **Quitar a alguien**: aquí en Equipo. La próxima vez que abra el hub se le borran los datos de su dispositivo y se cierra su sesión.
+- Todo lo que cada persona hace queda en **Actividad**.

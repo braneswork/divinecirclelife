@@ -506,3 +506,12 @@ code { font-size: .85em; word-break: break-all; }
 .order-form .checkout-foot .chip.more { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .order-form .shop-go { flex: 0 0 auto; padding-left: 18px; padding-right: 18px; }
 .order-row.open .prog-side { display: none; }
+
+/* actividad */
+.activity-sheet { width: min(100%, 680px); }
+.activity-sheet h2 { margin: 0 0 4px; }
+.activity { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; }
+.activity li { display: grid; grid-template-columns: 92px 1fr; gap: 8px; padding: 7px 2px; border-bottom: 1px dotted var(--line); font-size: 13.5px; }
+.activity time { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.activity small { color: var(--muted); }
+.activity li.delete span { color: var(--bad); }

@@ -515,3 +515,4 @@ code { font-size: .85em; word-break: break-all; }
 .activity time { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
 .activity small { color: var(--muted); }
 .activity li.delete span { color: var(--bad); }
+.backup-row { display: flex; justify-content: space-between; gap: 8px; }

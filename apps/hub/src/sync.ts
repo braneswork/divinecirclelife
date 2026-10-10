@@ -21,6 +21,11 @@ const toRow = (obj: object): Row =>
 const fromRow = <T>(row: Row): T =>
   Object.fromEntries(Object.entries(row).filter(([, v]) => v !== null).map(([k, v]) => [camel(k), v])) as T;
 
+/** Un respaldo de la nube (tablas en snake_case) en el formato del hub. */
+export function backupToState(data: Record<string, unknown>) {
+  return Object.fromEntries(TABLES.map(t => [t, ((data[t] as Row[] | undefined) ?? []).map(r => fromRow(r))]));
+}
+
 export type SyncStatus = 'local' | 'sin-sesion' | 'ok' | 'error';
 let lastError = '';
 export const syncError = () => lastError;

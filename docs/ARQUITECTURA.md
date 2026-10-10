@@ -119,7 +119,7 @@ Proyecto de Supabase: `vbeubyipzzpfbdjswavh` (URL y clave anon pública en
   Permissions-Policy, COOP.
 
 ### Configuración en Supabase (una vez)
-1. SQL Editor: `supabase/setup.sql`, `supabase/seguridad.sql`, `supabase/fijos.sql`, `supabase/precios.sql` y `supabase/equipo.sql`, en ese orden (cada uno se puede volver a correr).
+1. SQL Editor: `supabase/setup.sql`, `supabase/seguridad.sql`, `supabase/fijos.sql`, `supabase/precios.sql`, `supabase/equipo.sql` y `supabase/respaldos.sql`, en ese orden (cada uno se puede volver a correr).
 2. (Opcional, requiere SMTP propio: Authentication → Emails → Set up SMTP, p. ej. Resend)
    Plantilla **Magic link or OTP** con el código `{{ .Token }}` y el enlace `{{ .ConfirmationURL }}`.
    Sin SMTP propio se usa el enlace (el correo de Supabase tiene un límite bajo de envíos por hora).
@@ -130,6 +130,21 @@ Proyecto de Supabase: `vbeubyipzzpfbdjswavh` (URL y clave anon pública en
    **Allow new users to sign up**: desde ahí solo entran personas creadas en Users → Add user
    y agregadas en Ajustes → Equipo.
 5. Authentication → Providers → Email: contraseña mínima de 10 caracteres con letras y números.
+
+## Respaldos
+
+- **Diario, en Supabase** (`supabase/respaldos.sql`): `pg_cron` corre `take_backup()` a las 9:00 UTC
+  (3:00 en Costa Rica) y guarda todas las tablas en `backups` (35 días; la actividad se poda a 400 días).
+  Solo dueño/admin los leen; Ajustes → Respaldos los lista, descarga (en el formato del hub) y
+  permite **Respaldar ahora**. Protege de borrados y errores, no de perder el proyecto.
+- **Semanal, fuera de Supabase** (`.github/workflows/respaldo.yml`): los domingos GitHub Actions
+  descarga todas las tablas con la service_role key, las cifra (AES-256, PBKDF2) y las guarda 90 días
+  como artefacto. Secretos del repo: `SUPABASE_SERVICE_ROLE_KEY` y `BACKUP_PASSPHRASE`. Se puede
+  correr a mano desde Actions → Respaldo semanal → Run workflow. También mantiene activo el
+  proyecto gratuito de Supabase.
+- **Abrir un respaldo semanal**: descargar el artefacto (zip), y
+  `openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in respaldo-AAAA-MM-DD.tgz.enc -out r.tgz`
+  (pide la frase) y `tar xzf r.tgz`: queda un JSON por tabla.
 
 ## Publicación (Vercel)
 

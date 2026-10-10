@@ -133,7 +133,8 @@ Lo escrito llena la ficha de la venta; ahí se puede cambiar todo antes de guard
 ### Ajustes {#ajustes}
 - Tema automático, claro u oscuro.
 - **Cuenta**: tu correo y rol, sincronizar ahora y **salir**. Salir sube lo pendiente y borra los datos de este dispositivo (útil en equipos compartidos).
-- **Respaldo** (dueño y admin): descargar todos los datos en un archivo, o cargarlo. Conviene descargarlo cada semana.
+- **Respaldos** (dueño y admin): la nube guarda sola una copia completa cada madrugada y la conserva 35 días; aquí ves cuándo fue el último y puedes descargar cualquiera, o **Respaldar ahora**. También descargar lo de este dispositivo o **cargar archivo**. Para recuperar algo borrado: descarga el respaldo de antes y cárgalo; al sincronizar vuelve lo que faltaba (lo que existe se queda como está en la nube).
+- Además, cada domingo GitHub guarda una copia cifrada fuera de Supabase (90 días).
 - **Actividad** (dueño y admin): quién anotó, cambió o borró qué y cuándo, con filtro por persona. Nadie lo puede editar ni borrar.
 
 ### Equipo {#equipo}

@@ -1,0 +1,55 @@
+# Respaldo semanal fuera de Supabase: descarga todas las tablas, las cifra con
+# BACKUP_PASSPHRASE y las guarda 90 días como artefacto de GitHub Actions.
+# Secretos (Settings → Secrets and variables → Actions):
+#   SUPABASE_SERVICE_ROLE_KEY  Supabase → Project Settings → API keys (secret / service_role)
+#   BACKUP_PASSPHRASE          una frase larga que solo tú sepas (sin ella no se puede abrir)
+# Para abrir uno: ver docs/ARQUITECTURA.md → Respaldos.
+name: Respaldo semanal
+
+on:
+  schedule:
+    - cron: '0 10 * * 0' # domingos 4:00 de Costa Rica
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  respaldo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar y cifrar
+        env:
+          URL: https://vbeubyipzzpfbdjswavh.supabase.co
+          KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PASS: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          if [ -z "$KEY" ] || [ -z "$PASS" ]; then
+            echo "::error::Faltan los secretos SUPABASE_SERVICE_ROLE_KEY y BACKUP_PASSPHRASE"
+            exit 1
+          fi
+          mkdir -p out
+          for t in projects offerings clients recurring orders invoices expenses members audit; do
+            echo '[]' > "out/$t.json"
+            offset=0
+            key=id; [ "$t" = members ] && key=user_id
+            while :; do
+              page=$(curl -sSf "$URL/rest/v1/$t?select=*&order=$key&limit=1000&offset=$offset" -H "apikey: $KEY" -H "Authorization: Bearer $KEY")
+              [ -z "$page" ] && page='[]'
+              n=$(echo "$page" | jq 'length')
+              jq -s '.[0] + .[1]' "out/$t.json" <(echo "$page") > tmp.json && mv tmp.json "out/$t.json"
+              [ "$n" -lt 1000 ] && break
+              offset=$((offset + 1000))
+            done
+            echo "$t: $(jq length "out/$t.json") filas"
+          done
+          [ "$(jq length out/offerings.json)" -gt 0 ] || { echo "::error::No se pudo leer la base (¿clave correcta?)"; exit 1; }
+          tar czf respaldo.tgz out
+          openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -in respaldo.tgz -out "respaldo-$(date +%F).tgz.enc" -pass env:PASS
+          rm -rf out respaldo.tgz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: respaldo-${{ github.run_number }}
+          path: respaldo-*.tgz.enc
+          retention-days: 90

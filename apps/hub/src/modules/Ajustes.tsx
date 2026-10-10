@@ -6,7 +6,7 @@ import { Bubble, Focus, Sheet, Stage, Track, around, useToast } from '@dc/ui';
 import { sb } from '../supabase';
 import { syncNow } from '../cloud';
 import { getState, replaceState, useStore, type State } from '../store';
-import { claimRole, syncError } from '../sync';
+import { backupToState, claimRole, syncError } from '../sync';
 import { getTheme, setTheme, type Theme } from '../theme';
 import { signOutAndClear } from '../auth/session';
 import { HelpDot } from '../HelpDot';
@@ -19,7 +19,7 @@ export function Ajustes() {
   const [theme, setThemeState] = useState<Theme>(getTheme);
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState('');
-  const [panel, setPanel] = useState<'cuenta' | 'equipo' | 'clave' | 'actividad' | null>(null);
+  const [panel, setPanel] = useState<'cuenta' | 'equipo' | 'clave' | 'actividad' | 'respaldos' | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -58,8 +58,7 @@ export function Ajustes() {
     ...(isAdmin ? [
       { key: 'equipo', label: 'equipo', on: false, run: () => setPanel('equipo') },
       { key: 'actividad', label: 'actividad', on: false, run: () => setPanel('actividad') },
-      { key: 'down', label: 'descargar respaldo', on: false, run: exportJson },
-      { key: 'up', label: 'cargar respaldo', on: false, run: () => fileRef.current?.click() },
+      { key: 'respaldos', label: 'respaldos', on: false, run: () => setPanel('respaldos') },
     ] : []),
   ];
 
@@ -102,6 +101,7 @@ export function Ajustes() {
       {panel === 'clave' && <PasswordSheet onClose={() => setPanel(null)} />}
       {panel === 'equipo' && <Team myRole={role} me={session?.user.id} onClose={() => setPanel(null)} />}
       {panel === 'actividad' && <Activity onClose={() => setPanel(null)} />}
+      {panel === 'respaldos' && <Backups onClose={() => setPanel(null)} onExport={exportJson} onImport={() => fileRef.current?.click()} />}
     </>
   );
 }
@@ -256,6 +256,71 @@ function Activity({ onClose }: { onClose: () => void }) {
             </li>
           ))}
           {!shown.length && <li className="muted">Sin actividad todavía.</li>}
+        </ul>
+      )}
+    </Sheet>
+  );
+}
+
+interface BackupRow { id: number; at: string; kind: string; size: number }
+
+const fileName = (at: string) => `divine-circle-${at.slice(0, 10)}.json`;
+function download(name: string, data: unknown) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+/** Respaldos: los automáticos de la nube (uno por día, 35 días) y los de este dispositivo. */
+function Backups({ onClose, onExport, onImport }: { onClose: () => void; onExport: () => void; onImport: () => void }) {
+  const toast = useToast();
+  const [rows, setRows] = useState<BackupRow[] | null>(null);
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const load = () => void sb?.from('backups').select('id,at,kind,size').order('at', { ascending: false }).limit(60)
+    .then(({ data, error: e }) => { if (e) setError(e.message.includes('backups') ? 'Falta correr supabase/respaldos.sql en Supabase.' : e.message); else setRows(data as BackupRow[]); });
+  useEffect(load, []);
+
+  async function now() {
+    setBusy(true);
+    const { error: e } = await sb!.rpc('take_backup', { p_kind: 'manual' });
+    setBusy(false);
+    if (e) return toast(e.message);
+    toast('Respaldo guardado en la nube');
+    load();
+  }
+
+  async function get(r: BackupRow) {
+    const { data, error: e } = await sb!.from('backups').select('data').eq('id', r.id).single();
+    if (e || !data) return toast(e?.message ?? 'No se pudo descargar');
+    download(fileName(r.at), backupToState((data as { data: Record<string, unknown> }).data));
+  }
+
+  const last = rows?.[0];
+  const fresh = last && Date.now() - new Date(last.at).getTime() < 36 * 3600e3;
+  return (
+    <Sheet onClose={onClose} label="Respaldos" className="activity-sheet">
+      <h2>Respaldos</h2>
+      <p className="muted small">Cada madrugada (3:00) la nube guarda una copia completa y la conserva 35 días. Puedes descargar cualquiera; para recuperar algo borrado, descárgalo y usa <b>cargar archivo</b>.</p>
+      {error ? <p className="gate-msg">{error}</p> : rows && (
+        <p className={fresh ? 'ok-text' : 'gate-msg'}>{last ? `Último: ${new Date(last.at).toLocaleString('es-CR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}` : 'Todavía no hay respaldos en la nube.'}{last && !fresh ? ' — hace más de un día: revisa que pg_cron esté activo.' : ''}</p>
+      )}
+      <div className="row">
+        <button className="btn-inline" disabled={busy} onClick={now}>{busy ? 'Guardando…' : 'Respaldar ahora'}</button>
+        <button className="btn-inline ghost" onClick={onExport}>Descargar este dispositivo</button>
+        <button className="btn-inline ghost" onClick={onImport}>Cargar archivo</button>
+      </div>
+      {rows && rows.length > 0 && (
+        <ul className="activity">
+          {rows.map(r => (
+            <li key={r.id}>
+              <time>{new Date(r.at).toLocaleString('es-CR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</time>
+              <span className="backup-row">{r.kind === 'manual' ? 'a mano' : 'automático'} · {Math.max(1, Math.round(r.size / 1024))} KB
+                <button className="link" onClick={() => get(r)}>descargar</button></span>
+            </li>
+          ))}
         </ul>
       )}
     </Sheet>
